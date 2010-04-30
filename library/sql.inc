@@ -38,6 +38,12 @@ function sqlConnect($login,$pass,$dbase,$host,$port = '3306')
   return $GLOBALS['dbh'];
 }
 
+/*
+String values that are send to the database will need to be escaped
+in a database-specific manner to avoid being interpreted as SQL syntax.
+
+Use the functions from library/formdata.inc.php to do so.
+*/
 function sqlStatement($statement)
 {
   //----------run a mysql query, return the handle
