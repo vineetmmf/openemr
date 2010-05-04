@@ -513,6 +513,7 @@ function auditSQLEvent($statement, $outcome)
                     "patient_data" => "patient-record",
                     "payments" => "patient-record",
                     "pnotes" => "patient-record",
+                    'prior_auth' => 'patient-record',
 		    "onotes" => "patient-record",
                     "prescriptions" => "order",
                     "transactions" => "patient-record",
