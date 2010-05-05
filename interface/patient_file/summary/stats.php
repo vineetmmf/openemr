@@ -84,6 +84,52 @@ foreach ($ISSUE_TYPES as $key => $arr) {
 ?>
 </table> <!-- end patient_stats_issues -->
 
+<?php
+$pa_patient = (string) ((integer) $pid); /* SQL Injection Free */
+$todays_date = strftime("DATE '%F'"); /* SQL Injection Free */
+
+$query  = 'SELECT COUNT(*) AS count';
+$query .=      ', COALESCE(SUM(pa_count), 0) AS units';
+$query .=      ', COUNT(DISTINCT pa_service) AS services';
+$query .= ' FROM prior_auth';
+$query .= " WHERE pa_patient = $pa_patient";
+$query .=   " AND pa_begin <= $todays_date";
+$query .=   " AND (pa_end IS NULL OR $todays_date <= pa_end)";
+$query .= ';';
+
+$res = sqlStatement($query);
+if ($res !== FALSE) {
+	$results = sqlFetchArray($res);
+}
+
+if (isset($results) && $results !== FALSE) {
+	$cnt_number = $results['count'];
+	$sum_units = $results['units'];
+	$cnt_services = $results['services'];
+}
+
+if (sqlFetchArray($res) !== FALSE) {
+	/* XXX: Log a warning. */
+}
+
+if (isset($cnt_number, $sum_units, $cnt_services)) {
+?>
+<div id="patient_stats_prior_auths">
+	<h3><?php echo htmlspecialchars(xl('Prior Authorizations'), ENT_NOQUOTES); ?></h3>
+	<p class="summary">
+		<?php echo htmlspecialchars($cnt_number, ENT_NOQUOTES); ?> active,
+		totaling <?php echo htmlspecialchars($sum_units, ENT_NOQUOTES); ?> units across
+		<?php echo htmlspecialchars($cnt_services, ENT_NOQUOTES); ?> services.
+	</p>
+	<p class="actions">
+		<a href="javascript:load_location('prior_auths.php')">
+			<?php echo htmlspecialchars(xl('Manage'), ENT_NOQUOTES); ?>
+	</a></p>
+</div>
+<?php
+}
+?>
+
 <table id="patient_stats_spreadsheets">
 <?php
 
