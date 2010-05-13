@@ -3,6 +3,50 @@ include_once(dirname(__FILE__) . '/sql.inc'); // fixes vulnerability with regist
 require_once(dirname(__FILE__) . '/formdata.inc.php');
 
 // Translation function
+function xl_only_always($key, $lang_id) {
+	$query  = 'SELECT ld.definition AS value';
+	$query .= ' FROM      lang_definitions AS ld';
+	$query .=      ' JOIN lang_constants AS lc';
+	$query .=        ' ON ld.cons_id = lc.cons_id';
+	$query .= " WHERE lc.constant_name = '" . add_escape_custom($key) . "'";
+	$query .=   " AND ld.lang_id = $lang_id";
+	$query .= ';';
+
+	$resource = sqlQuery($query);
+	if ($resource === FALSE) {
+		return $key;
+	}
+
+	$row = sqlFetchArray($resource);
+	if ($row === FALSE) {
+		return $key
+	}
+
+	$value = $row['value'];
+
+	$row = sqlFetchArray($resource);
+	if ($row !== FALSE) {
+		/* XXX: Warning, key violation. */
+	}
+
+	return $value;
+}
+
+xl_clean_key($raw_key) {
+	/* Convert new lines to spaces and remove windows end of lines. */
+	$patterns = array('/\n/','/\r/');
+	$replace =  array(' '   ,''    );
+
+	return preg_replace($patterns, $replace, $raw_key);
+}
+
+xl_clean_value($raw_value) {
+	/* remove dangerous characters */
+	$patterns = array('/\n/','/\r/','/"/',"/'/");
+	$replace =  array(' '   ,''    ,'`'  ,'`'  );
+	$string = preg_replace($patterns, $replace, $string);
+}
+
 // This is the translation engine
 function xl($constant,$mode='r',$prepend='',$append='') {
   // set language id
@@ -19,26 +63,10 @@ function xl($constant,$mode='r',$prepend='',$append='') {
   }
   else {
     // TRANSLATE
-    // first, clean lines
-    // convert new lines to spaces and remove windows end of lines
-    $patterns = array ('/\n/','/\r/');
-    $replace = array (' ','');
-    $constant = preg_replace($patterns, $replace, $constant);
-
-    // second, attempt translation
-    $sql="SELECT * FROM lang_definitions JOIN lang_constants ON " .
-      "lang_definitions.cons_id = lang_constants.cons_id WHERE " .
-      "lang_id='$lang_id' AND constant_name = '" .
-      add_escape_custom($constant) . "' LIMIT 1";
-    $res = SqlStatement($sql);
-    $row = SqlFetchArray($res);
-    $string = $row['definition'];
+    $constant = xl_clean_key($constant);
+    $string = xl_only_always($constant, $lang_id);
     if ($string == '') { $string = "$constant"; }
-    
-    // remove dangerous characters
-    $patterns = array ('/\n/','/\r/','/"/',"/'/");
-    $replace = array (' ','','`','`');
-    $string = preg_replace($patterns, $replace, $string);
+    $string = xl_clean_value($string);
   }
     
   $string = "$prepend" . "$string" . "$append";
