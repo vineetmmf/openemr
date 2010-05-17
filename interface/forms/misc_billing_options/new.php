@@ -2,10 +2,31 @@
 include_once("../../globals.php");
 include_once("$srcdir/api.inc");
 formHeader("Form: misc_billing_options");
+
+$pa_patient = (string) ((integer) $pid);
+
+$query  = 'SELECT pa_id AS id';
+$query .=      ', pa_number AS number';
+$query .= ' FROM prior_auth';
+$query .= " WHERE pa_patient = $pa_patient";
+$query .= ';';
+
+$resource = sqlStatement($query);
+if ($resource !== FALSE) {
+	$row = sqlFetchArray($resource);
+}
+
+$prior_auths = array();
+if (isset($row) && $row !== FALSE) {
+	do {
+		array_push($prior_auths, $row);
+	} while (($row = sqlFetchArray($resource)) !== FALSE);
+}
+
 ?>
 <html><head>
 <?php html_header_show();?>
-<link rel="stylesheet" href="<?php echo $css_header;?>" type="text/css">
+<link rel="stylesheet" href="<?php echo htmlspecialchars($css_header, ENT_QUOTES); ?>" type="text/css">
 </head>
 <body class="body_top">
 <form method=post action="<?php echo $rootdir;?>/forms/misc_billing_options/save.php?mode=new" name="my_form">
@@ -23,7 +44,17 @@ formHeader("Form: misc_billing_options");
 <span class=text><?php xl('Amount Charges','e'); ?>: </span><input type=entry size=7 align='right' name="lab_amount" value="<?php echo $obj{"lab_amount"};?>" ><br><br>
 <span class=text><?php xl('BOX 22. Medicaid Resubmission Code (ICD-9) ','e');?></span><input type=entry size=9 name="medicaid_resubmission_code" value="<?php echo $obj{"medicaid_resubmission_code"};?>" >
 <span class=text><?php xl(' Medicaid Original Reference No. ','e');?></span><input type=entry size=15 name="medicaid_original_reference" value="<?php echo $obj{"medicaid_original_reference"};?>" ><br><br>
-<span class=text><?php xl('BOX 23. Prior Authorization No. ','e');?></span><input type=entry size=15 name="prior_auth_number" value="<?php echo $obj{"prior_auth_number"};?>" ><br><br>
+<span class=text><?php htmlspecialchars(xl('BOX 23. Prior Authorization No.'), ENT_NOQUOTES); ?></span>
+<select name="pa_id">
+	<option selected='selected' value=''>(<?php echo htmlspecialchars(xl('None'), ENT_NOQUOTES); ?>)</option>
+<?php
+foreach ($prior_auths as $pa) {
+?>
+	<option value='<? echo htmlspecialchars($pa['id'], ENT_QUOTES); ?>'><?php echo htmlspecialchars($pa['number'], ENT_NOQUOTES); ?></option>
+<?php
+}
+?>
+</select><br><br>
 <span class=text><?php xl('X12 only: Replacement Claim ','e'); ?>: </span><input type=checkbox name="replacement_claim" value="1" <?php if ($obj['replacement_claim'] == "1") echo "checked";?>><br><br>
 
 <table>

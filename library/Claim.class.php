@@ -34,6 +34,7 @@ class Claim {
   var $supervisor_numbers; // row from insurance_numbers table for current payer
   var $patient_data;      // row from patient_data table
   var $billing_options;   // row from form_misc_billing_options table
+  var $prior_auth;        /* Fields from the prior_auth table */
   var $invoice;           // result from get_invoice_summary()
   var $payers;            // array of arrays, for all payers
   var $copay;             // total of copays from the billing table
@@ -210,13 +211,22 @@ class Claim {
       "ORDER BY id LIMIT 1";
     $this->patient_data = sqlQuery($sql);
 
-    $sql = "SELECT fpa.* FROM forms JOIN form_misc_billing_options AS fpa " .
-      "ON fpa.id = forms.form_id WHERE " .
-      "forms.encounter = '{$this->encounter_id}' AND " .
-      "forms.pid = '{$this->pid}' AND " .
-      "forms.formdir = 'misc_billing_options' " .
-      "ORDER BY forms.date";
+    $sql  = 'SELECT fpa.*';
+    $sql .= ' FROM forms';
+    $sql .=      ' JOIN form_misc_billing_options AS fpa';
+    $sql .=        ' ON fpa.id = forms.form_id';
+    $sql .= " WHERE forms.encounter = '{$this->encounter_id}'";
+    $sql .=   " AND forms.pid = '{$this->pid}'";
+    $sql .=   " AND forms.formdir = 'misc_billing_options'";
+    $sql .= ' ORDER BY forms.date';
+    $sql .= ';';
     $this->billing_options = sqlQuery($sql);
+
+    $sql  = 'SELECT pa_number';
+    $sql .= ' FROM prior_auth';
+    $sql .= " WHERE pa_id = {$this->billing_options['pa_id']}";
+    $sql .= ';';
+    $this->prior_auth = sqlQuery($sql);
 
     $referrer_id = (empty($GLOBALS['MedicareReferrerIsRenderer']) ||
       $this->insurance_numbers['provider_number_type'] != '1C') ?
@@ -906,7 +916,7 @@ class Claim {
   }
 
   function priorAuth() {
-    return x12clean(trim($this->billing_options['prior_auth_number']));
+    return x12clean(trim($this->prior_auth['pa_number']));
   }
 
   function isRelatedEmployment() {
