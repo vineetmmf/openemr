@@ -12,15 +12,20 @@ if ($_POST["hospitalization_date_from"] == "0000-00-00" || $_POST["hospitalizati
 	else {$_POST["is_hospitalized"] = "1";}
 
 foreach ($_POST as $k => $var) {
-$_POST[$k] = mysql_escape_string($var);
+$_POST[$k] = formData($k);
 echo "$var\n";
 }
 if ($encounter == "")
 $encounter = date("Ymd");
 if ($_GET["mode"] == "new"){
+	if (empty($_POST['pa_id'])) {
+		/* Use default of database NULL. */
+		unset($_POST['pa_id']);
+	}
 $newid = formSubmit("form_misc_billing_options", $_POST, $_GET["id"], $userauthorized);
 addForm($encounter, "Misc Billing Options", $newid, "misc_billing_options", $pid, $userauthorized);
 }elseif ($_GET["mode"] == "update") {
+	/* When pa_id is an empty string, use database NULL, not 0'. */
 sqlInsert("update form_misc_billing_options set pid = {$_SESSION["pid"]},
 	groupname='".$_SESSION["authProvider"]."',
 	user='".$_SESSION["authUser"]."',
@@ -39,7 +44,7 @@ sqlInsert("update form_misc_billing_options set pid = {$_SESSION["pid"]},
 	hospitalization_date_to='".$_POST["hospitalization_date_to"]."',
 	medicaid_resubmission_code='".$_POST["medicaid_resubmission_code"]."',
 	medicaid_original_reference='".$_POST["medicaid_original_reference"]."',
-	prior_auth_number='".$_POST["prior_auth_number"]."',
+	pa_id=" . (empty($_POST['pa_id']) ? 'NULL' : "'".$_POST["pa_id"]."'") . ",
   replacement_claim='".$_POST["replacement_claim"]."',
 	comments='".$_POST["comments"]."'
 	where id=$id");

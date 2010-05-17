@@ -415,7 +415,17 @@ class Procedure Extends DataObjectBase {
 		$obj= $m->getparam(0);
 		$key = $obj->getval();
 
-		$sql = "SELECT * FROM forms JOIN form_misc_billing_options as fpa on fpa.id = forms.form_id where forms.encounter = '" . $_SESSION['billkey'] . "' and forms.pid = '" . $_SESSION['patient_id'] . "' and forms.formdir = 'misc_billing_options' order by forms.date";
+		$sql  = 'SELECT prior_auth.pa_number AS prior_auth_number';
+		$sql .= ' FROM forms';
+		$sql .=      ' JOIN form_misc_billing_options AS fpa';
+		$sql .=        ' ON fpa.id = forms.form_id';
+		$sql .=      ' JOIN prior_auth';
+		$sql .=        ' ON prior_auth.pa_id = fpa.pa_id';
+		$sql .= " WHERE forms.encounter = '" . $_SESSION['billkey'] . "'";
+		$sql .=   " AND forms.pid = '" . $_SESSION['patient_id'] . "'";
+		$sql .=   " AND forms.formdir = 'misc_billing_options'";
+		$sql .= " ORDER BY forms.date";
+		$sql .= ';';
 		//echo $sql;
 		$db = $GLOBALS['adodb']['db'];
 		$results = $db->Execute($sql);
