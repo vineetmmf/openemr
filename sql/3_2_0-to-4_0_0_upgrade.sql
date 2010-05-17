@@ -391,3 +391,59 @@ ALTER TABLE drug_sales
   ADD notes varchar(255) NOT NULL DEFAULT '';
 #EndIf
 
+-- Create prior_auth table if needed
+#IfNotTable prior_auth
+#EndIf
+
+-- Migrate data from form_misc_billing_options.prior_auth_number to prior_auth.pa_number
+#IfMissingColumn misc_billing_options pa_id
+
+-- Prepare prior_auth table to receive partial data.
+ALTER TABLE prior_auth
+	ALTER COLUMN pa_patient bigint(20) NULL REFERENCES pateint_data ( id ),
+	ALTER COLUMN pa_service VARCHAR(31) NULL,
+	ALTER COLUMN pa_count VARCHAR(31) NULL,
+	ALTER COLUMN pa_begin DATE NULL;
+
+-- Temporarily add a column for linking back to form_misc_billing_options
+ALTER TABLE prior_auth
+	ADD COLUMN tmp_fmbo_child bigint(20);
+
+-- Populate prior_auth from form_misc_billing_options
+INSERT INTO prior_auth
+     ( tmp_fmbo_child          , pa_patient       , pa_number
+     )
+SELECT id     AS tmp_fmbo_child, pid AS pa_patient, prior_auth_number AS pa_number
+  FROM form_misc_billing_options
+ WHERE prior_auth_number IS NOT NULL
+;
+
+-- Restore prior_auth constraints
+ALTER TABLE prior_auth
+	ALTER COLUMN pa_patient NOT NULL,
+	ALTER COLUMN pa_service NOT NULL,
+	ALTER COLUMN pa_count NOT NULL,
+	ALTER COLUMN pa_begin NOT NULL;
+
+-- Add new foreign key column
+ALTER TABLE form_misc_billing_options
+	ADD COLUMN pa_id INTEGER DEFAULT NULL REFERENCES prior_auth ( pa_id ) AFTER medicaid_original_reference;
+;
+
+-- Update foreign key column, using temporary column
+UPDATE form_misc_billing_options AS fmbo
+   SET pa_id = (SELECT pa.pa_id
+                  FROM prior_auth AS pa
+                 WHERE pa.tmp_fmbo_child = fmbo.id
+               )
+ WHERE prior_auth_number IS NOT NULL
+;
+
+-- Drop temporary column
+ALTER TABLE prior_auth DROP COLUMN tmp_fmbo_child;
+
+-- Drop old column
+ALTER TABLE form_misc_billing_options DROP COLUMN prior_auth_number;
+
+#Endif
+-- End data migration from form_misc_billing_options to prior_auth
