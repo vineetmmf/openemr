@@ -13,14 +13,12 @@
 // Main function that will manage POST, GET, and 
 // REQUEST variables 
 function formData($name, $type='P', $isTrim=false) {
-  if ($type == 'P')
-    $s = isset($_POST[$name]) ? $_POST[$name] : '';
-  else if ($type == 'G')
-    $s = isset($_GET[$name]) ? $_GET[$name] : '';
-  else
-    $s = isset($_REQUEST[$name]) ? $_REQUEST[$name] : '';
-  
-  return formDataCore($s,$isTrim);
+  return formDataCore(requestValue($name, $type),$isTrim);
+}
+
+/* Fetches from _POST, _GET, or _REQUEST and send to formDataCore_DATE */
+function formData_DATE($name, $type='P') {
+	return formDataCore_DATE(requestValue($name, $type));
 }
 
 // Core function that will be called by formData.
@@ -34,6 +32,25 @@ function formDataCore($s, $isTrim=false) {
       //add escapes for safe database insertion
       $s = add_escape_custom($s);
       return $s;
+}
+
+/* Takes a string and tries to interpret it as a date
+ * using strtotime().  If strtotime() is successful, then
+ * we format the date as a SQL DATE literal and return
+ * the resulting string.
+ *
+ * Failure is indicated by a NULL return.
+ */
+function formDataCore_DATE($s) {
+	/* strtotime handles whitespace; no need to trim. */
+	$parse_date = strtotime(strip_escape_custom($s));
+
+	/* Failure return depends on PHP version. See PHP documentation. */
+	if ($parse_date !== FALSE && $parse_date !== -1) {
+		/* %F is always of the form YYYY-MM-DD, all SQL-string safe.
+		 * No need for further escaping. */
+		return strftime("DATE '%F'", $parse_date);
+	}
 }
 
 // Will remove escapes if needed (ie magic quotes turned on) from string
@@ -64,4 +81,15 @@ function add_escape_custom($s) {
 function formTrim($s) {
   return formDataCore($s,true);
 }
+
+/* Used by formData* functions to get a value from the HTTP request. */
+function requestValue($name, $type = 'P') {
+  if ($type == 'P')
+    return isset($_POST[$name]) ? $_POST[$name] : '';
+  else if ($type == 'G')
+    return isset($_GET[$name]) ? $_GET[$name] : '';
+  else
+    return isset($_REQUEST[$name]) ? $_REQUEST[$name] : '';
+}
+
 ?>
