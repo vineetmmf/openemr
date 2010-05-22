@@ -344,8 +344,17 @@ $GLOBALS['insurance_companies_are_not_customers'] = true;
 // Currently it is applicable only to the "Search or Add Patient" form.
 $GLOBALS['layout_search_color'] = '#ffff55';
 
+// Control the use of clinical decision rules and patient reminders.
+$GLOBALS['clinical_decision_rules_and_patient_reminders'] = true;
+
 //EMAIL SETTINGS
 $SMTP_Auth = !empty($GLOBALS['SMTP_USER']);
+
+// Automated VOIP service provided by Maviq. Please visit http://signup.maviq.com for more information.
+$GLOBALS['phone_notification_hour'] = 72;
+$GLOBALS['phone_gateway_username']  = '';
+$GLOBALS['phone_gateway_password']  = '';
+$GLOBALS['phone_gateway_url']       = '';
 
 // The following credentials are provided by OpenEMR Support LLC for testing.
 // When you sign up with their Lab Exchange service, they will provide you with your own credentials.

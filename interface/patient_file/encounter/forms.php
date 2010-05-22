@@ -10,6 +10,7 @@ require_once("$srcdir/calendar.inc");
 require_once("$srcdir/acl.inc");
 require_once("$srcdir/formatting.inc.php");
 require_once("$srcdir/patient.inc");
+include_once("../summary/clinical_alerts_functions.php");
 ?>
 <html>
 
@@ -22,7 +23,12 @@ require_once("$srcdir/patient.inc");
 
 <script type="text/javascript" src="<?php echo $GLOBALS['webroot'] ?>/library/dialog.js"></script>
 
-
+<?php
+if ($pid && $GLOBALS['clinical_decision_rules_and_patient_reminders']) {
+ insert_alert($pid);// Check and insert alerts for patient.
+ check_alerts($pid);// Check and show popup alerts.
+}
+?>
 
 <link rel="stylesheet" href="<?php echo $css_header;?>" type="text/css">
 <link rel="stylesheet" type="text/css" href="../../../library/js/fancybox/jquery.fancybox-1.2.6.css" media="screen" />

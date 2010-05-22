@@ -126,6 +126,9 @@
   'orr' => array(xl('Proc Res')  , 1, 'orders/orders_results.php'),
   'prp' => array(xl('Pt Report') , 1, 'patient_file/report/patient_report.php'),
   'pno' => array(xl('Pt Notes')  , 1, 'patient_file/summary/pnotes.php'),
+  'php' => array(xl('Pt Health Plans')   , 1, 'patient_file/health_plans/health_plans.php'),
+  'rmd' => array(xl('Patient Reminders') , 1, 'patient_file/health_plans/patient_reminders.php'),
+  'alt' => array(xl('Clinical Alerts')   , 1, 'patient_file/summary/clinical_alerts.php'),
   'tra' => array(xl('Transact')  , 1, 'patient_file/transaction/transactions.php'),
   'sum' => array(xl('Summary')   , 1, 'patient_file/summary/summary_bottom.php'),
   'enc' => array(xl('Encounter') , 2, 'patient_file/encounter/encounter_top.php'),
@@ -786,6 +789,14 @@ function getEncounterTargetFrame( name ) {
           <?php genPopLink(xl('Address Book'),'../usergroup/addrbook_list.php?popup=1'); ?>
          </ul>
       </li>
+	  <?php if ($GLOBALS['clinical_decision_rules_and_patient_reminders']) { ?>
+      <li><span><?php xl('Health Topics','e') ?></span>
+        <ul>
+		<?php genMiscLink('RTop','hpp','1',xl('Clinical Alerts'),'patient_file/summary/clinical_alerts_patient.php'); ?>
+		<?php genMiscLink('RTop','hpp','1',xl('Health Plans'),'patient_file/health_plans/health_plans_patient.php'); ?>
+        </ul>
+      </li>
+	  <?php } ?>
     </ul>
   </li>
   <li class="open"><span><?php xl('Reports','e') ?></span>
@@ -833,6 +844,11 @@ function getEncounterTargetFrame( name ) {
       <?php if (acl_check('admin', 'super'    )) genMiscLink('RTop','adm','0',xl('Globals'),'super/edit_globals.php'); ?>
       <?php if (acl_check('admin', 'users'    )) genMiscLink('RTop','adm','0',xl('Facilities'),'usergroup/facilities.php'); ?>
       <?php if (acl_check('admin', 'users'    )) genMiscLink('RTop','adm','0',xl('Users'),'usergroup/usergroup_admin.php'); ?>
+	  <?php if ($GLOBALS['clinical_decision_rules_and_patient_reminders']) { ?>
+      <?php if (acl_check('admin', 'super'    )) genMiscLink('RTop','adm','0',xl('Clinical Alerts'),'patient_file/summary/clinical_alerts.php'); ?>
+      <?php if (acl_check('admin', 'super'    )) genMiscLink('RTop','adm','0',xl('Health Plans'),'patient_file/health_plans/health_plans_admin.php'); ?>
+      <?php if (acl_check('admin', 'super'    )) genMiscLink('RTop','adm','0',xl('Patient Reminders'),'patient_file/health_plans/patient_reminders.php'); ?>
+	  <?php } ?>
       <?php genTreeLink('RTop','pwd','Users Password Change'); ?>
       <?php if (acl_check('admin', 'practice' )) genMiscLink('RTop','adm','0',xl('Practice'),'../controller.php?practice_settings'); ?>
       <?php if (acl_check('admin', 'superbill')) genTreeLink('RTop','sup',xl('Services')); ?>
@@ -913,8 +929,16 @@ if (!empty($reg)) {
 ?>
         </ul>
       </li>
+	  <?php if ($GLOBALS['clinical_decision_rules_and_patient_reminders']) { ?>
+      <li><span><?php xl('Health Topics','e') ?></span>
+        <ul>
+		<?php genMiscLink('RTop','hpp','1',xl('Clinical Alerts'),'patient_file/summary/clinical_alerts_patient.php'); ?>
+		<?php genMiscLink('RTop','hpp','1',xl('Health Plans'),'patient_file/health_plans/health_plans_patient.php'); ?>
         </ul>
       </li>
+	  <?php } ?>
+    </ul>
+  </li>
   <li><span><?php xl('Fees','e') ?></span>
     <ul>
       <?php genMiscLink('RBot','cod','2',xl('Fee Sheet'),'patient_file/encounter/load_form.php?formname=fee_sheet'); ?>
@@ -946,6 +970,11 @@ if (!empty($reg)) {
       <?php if (acl_check('admin', 'super'    )) genMiscLink('RTop','adm','0',xl('Globals'),'super/edit_globals.php'); ?>
       <?php if (acl_check('admin', 'users'    )) genMiscLink('RTop','adm','0',xl('Facilities'),'usergroup/facilities.php'); ?>
       <?php if (acl_check('admin', 'users'    )) genMiscLink('RTop','adm','0',xl('Users'),'usergroup/usergroup_admin.php'); ?>
+	  <?php if ($GLOBALS['clinical_decision_rules_and_patient_reminders']) { ?>
+      <?php if (acl_check('admin', 'super'    )) genMiscLink('RTop','adm','0',xl('Clinical Alerts'),'patient_file/summary/clinical_alerts.php'); ?>
+      <?php if (acl_check('admin', 'super'    )) genMiscLink('RTop','adm','0',xl('Health Plans'),'patient_file/health_plans/health_plans_admin.php'); ?>
+      <?php if (acl_check('admin', 'super'    )) genMiscLink('RTop','adm','0',xl('Patient Reminders'),'patient_file/health_plans/patient_reminders.php'); ?>
+	  <?php } ?>
       <?php
 	  // Changed the target URL from practice settings -> Practice Settings - Pharmacy... Dec 09,09 .. Visolve ... This replaces empty frame with Pharmacy window
 	  if (acl_check('admin', 'practice' )) genMiscLink('RTop','adm','0',xl('Practice'),'../controller.php?practice_settings&pharmacy&action=list'); ?>

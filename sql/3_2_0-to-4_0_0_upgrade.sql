@@ -698,6 +698,13 @@ ALTER TABLE `codes`
   ADD `reportable` TINYINT(1) DEFAULT 0 COMMENT '0 = non-reportable, 1 = reportable';
 #EndIf
 
+#IfNotRow2D list_options list_id lists option_id alert_status
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('lists'       ,'alert_status','Alert Status',51,0);
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('alert_status','New'         ,'New'         , 5,0);
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('alert_status','Read'        ,'Read'        , 10,0);
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('alert_status','Done'        ,'Done'        , 15,0);
+#EndIf
+
 #IfNotTable syndromic_surveillance
 CREATE TABLE `syndromic_surveillance` (
   `id` bigint(20) NOT NULL auto_increment,
@@ -709,6 +716,30 @@ CREATE TABLE `syndromic_surveillance` (
 ) ENGINE=MyISAM AUTO_INCREMENT=1 ;
 #EndIf
 
+#IfNotRow2D list_options list_id lists option_id alert_color
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('lists'      ,'alert_color','Alert Color',50,0);
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('alert_color','Black'      ,'Black'      ,5 ,0);
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('alert_color','Blue'       ,'Blue'       ,10 ,0);
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('alert_color','Brown'      ,'Brown'      ,15,0);
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('alert_color','Green'      ,'Green'      ,20,0);
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('alert_color','Purple'     ,'Purple'     ,25,0);
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('alert_color','Red'        ,'Red'        ,30,0);
+#EndIf
+
+#IfNotTable clinical_alerts
+CREATE TABLE `clinical_alerts` (
+  `alert_id` bigint(20) NOT NULL auto_increment,
+  `alert_name` varchar(255) default NULL,
+  `plan_id` int(11) default NULL,
+  `color` varchar(50) default NULL,
+  `message` longtext,
+  `past_due_message` longtext,
+  `activated` bigint(20) DEFAULT '0',
+  `responded` bigint(20) DEFAULT '0',
+  PRIMARY KEY  (`alert_id`)
+) ENGINE=MyISAM AUTO_INCREMENT=1 ;
+#EndIf
+
 #IfMissingColumn lists reinjury_id
 ALTER TABLE lists
   ADD reinjury_id bigint(20)  NOT NULL DEFAULT 0,
@@ -716,14 +747,89 @@ ALTER TABLE lists
   ADD injury_type varchar(31) NOT NULL DEFAULT '';
 #EndIf
 
+#IfNotTable patient_alerts
+CREATE TABLE `patient_alerts` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `alert_id` bigint(20) NOT NULL COMMENT 'alert_id from clinical_alerts table',
+  `pid` bigint(20) NOT NULL,
+  `status` varchar(255) NOT NULL COMMENT 'Read, Done, New',
+  `date_modified` date DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM AUTO_INCREMENT=1 ;
+#EndIf
+
 ALTER TABLE layout_options CHANGE description description text;
+
+#IfNotRow2D list_options list_id lists option_id enrollment_status
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('lists'            ,'enrollment_status','Enrollment Status',55,0);
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('enrollment_status','patient_refused'  ,'Patient Refused'  , 5,0);
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('enrollment_status','in_progress'      ,'In Progress'      ,10,0);
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('enrollment_status','completed'        ,'Completed'        ,15,0);
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('enrollment_status','on_hold'          ,'On Hold'          ,20,0);
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('enrollment_status','cancelled'        ,'Cancelled'        ,25,0);
+#EndIf
 
 #IfMissingColumn transactions refer_reply_date
 ALTER TABLE transactions ADD refer_reply_date date DEFAULT NULL;
 #EndIf
 
+#IfNotRow2D list_options list_id lists option_id reminder_status
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('lists'          ,'reminder_status','Reminder Status',60,0);
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('reminder_status','sent'           ,'Sent'           , 5,0);
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('reminder_status','failed'         ,'Failed'         ,10,0);
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('reminder_status','pending'        ,'Pending'        ,15,1);
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('reminder_status','on_hold'        ,'On Hold'        ,20,0);
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('reminder_status','cancelled'      ,'Cancelled'      ,25,0);
+#EndIf
+
 #IfMissingColumn transactions reply_related_code
 ALTER TABLE transactions ADD reply_related_code varchar(255) NOT NULL DEFAULT '';
+#EndIf
+
+#IfNotTable health_plans
+CREATE TABLE `health_plans` (
+  `plan_id` bigint(20) NOT NULL auto_increment,
+  `plan_name` varchar(255) DEFAULT NULL,
+  `plan_description` longtext,
+  `category` varchar(255) DEFAULT NULL COMMENT 'disease management,diabetes',
+  `gender` varchar(255) DEFAULT NULL,
+  `goals` longtext,
+  `age_from` varchar(255) DEFAULT NULL,
+  `age_to` varchar(255) DEFAULT NULL,
+  `month_from` varchar(255) DEFAULT NULL,
+  `month_to` varchar(255) DEFAULT NULL,
+  `icd_include` longtext COMMENT '753.5::535::355',
+  `cpt_include` longtext,
+  `ndc_include` longtext COMMENT 'from Lexicomp or a free drug database',
+  `allergy_include` longtext,
+  `patient_history_include` longtext COMMENT 'e.g. smoking status',
+  `lab_abnormal_result_include` longtext COMMENT 'from lab results table',
+  `icd_exclude` longtext,
+  `cpt_exclude` longtext,
+  `ndc_exclude` longtext,
+  `allergy_exclude` longtext,
+  `patient_history_exclude` longtext,
+  `lab_abnormal_result_exclude` longtext,
+  `activation_status` varchar(255) DEFAULT NULL,
+  PRIMARY KEY  (`plan_id`)
+) ENGINE=MyISAM AUTO_INCREMENT=1;
+
+insert into health_plans (plan_id, plan_name, plan_description, goals, category, gender, age_from, age_to, icd_include, activation_status) values (1, 'Heart Disease', 'A health plan for someone who has been diagnosed with any kind of heart disease related problem, including atherosclerosis and complications.', 'Start a proper care program to help the patient manage this disease.', 'disease_management', '', '50', '100', '429::440', 'deactivate');
+insert into health_plans (plan_id, plan_name, plan_description, goals, category, gender, icd_include, activation_status) values (2, 'Trauma Disorders', 'A health plan for someone who has been injured physically in accident or any kind of violence.', 'Reduce the risk of further injury to the patient and expediete recovery.', 'wellness', '', '800::801::802::803::804::805::806::807::808::809::810::811::812::813::814::815::816::817::818::819::820::821::822::823::824::825::826::827::828::829::830::831::832::833::834::835::836::837::838::839::840::841::842::843::844::845::846::847::848::849::850::851::852::853::854::855::856::857::858::859::860::861::862::863::864::865::866::867::868::869::870::871::872::873::874::875::876::877::878::879::880::881::882::883::884::885::886::887::888::889::890::891::892::893::894::895::896::897::898::899::900::901::902::903::904::905::906::907::908::909::910::911::912::913::914::915::916::917::918::919::920::921::922::923::924::925::926::927::928::929::930::931::932::933::934::935::936::937::938::939::940::941::942::943::944::945::946::947::948::949::950::951::952::953::954::955::956::957::958::959', 'deactivate');
+insert into health_plans (plan_id, plan_name, plan_description, goals, category, gender, age_from, age_to, icd_include, patient_history_include, activation_status) values (3, 'Cancer Screening', 'A health plan for those who have a cancel risk due to family history or tobacco use.', 'Screen the patient for potential cancer issue and start the treatment early if cancer is diagnosed.', 'disease_management', '', '40', '100', '140::141::142::143::144::145::146::147::148::149::150::151::152::153::154::155::156::157::158::159::160::161::162::163::164::165::166::167::168::169::170::171::172::173::174::175::176::177::178::179::180::181::182::183::184::185::186::187::188::189::190::191::192::193::194::195::196::197::198::199::200::201::202::203::204::205::206::207::208::209::210::211::212::213::214::215::216::217::218::219::220::221::222::223::224::225::226::227::228::229::230::231::232::233::234::235::236::237::238::239', '||Current Tobacco', 'deactivate');
+insert into health_plans (plan_id, plan_name, plan_description, goals, category, gender, age_from, age_to, icd_include, activation_status) values (4, 'Mental Disorders', 'A health assessment for someone who is experiencing mental issue related to any of the followings: drug use, alcohol use, stress, sexual disorders, delusional, schizophrenic, etc.', 'Perform an assessment to decide if further treatment or referral is required.', 'wellness', '', '12', '100', '291::292::293::294::295::296::297::298::299::300::301::302::303::304::305::306::307::308::309::310::311::312::313::314::315::316', 'deactivate');
+insert into health_plans (plan_id, plan_name, plan_description, goals, category, gender, age_from, icd_include, activation_status) values (5, 'Asthma', 'A health plan for someone who is experiencing Asthma-like symptoms and/or has already been diagnosed as having Asthma.', 'Perform an assessment to enable the patient receive proper Asthma care.', 'disease_management', '', '10', '493', 'deactivate');
+insert into health_plans (plan_id, plan_name, plan_description, goals, category, gender, icd_include, activation_status) values (6, 'Hypertension', 'A health plan for someone who has high blood pressure or been diagnosed with any kind of hypertensive heart and kidney diseases.', 'Enable the patient to develop a healthy lifestyle and reduce the risk of heart diseases.', 'disease_management', '', '401::402::403::404::405', 'deactivate');
+insert into health_plans (plan_id, plan_name, plan_description, goals, category, gender, age_from, icd_include, activation_status) values (7, 'Diabetes Type 2', 'A health plan for someone who is diagnosed with diabetes type 2.', 'Enroll patients aged 18 through 75 years with diabetes mellitus and help them lower their hemoglobin A1c to less than 9.0%.', 'disease_management', '', '10', '249::250', 'deactivate');
+insert into health_plans (plan_id, plan_name, plan_description, goals, category, gender, age_from, age_to, icd_include, activation_status) values (8, 'Osteoarthritis and Joint Diseases', 'A health plan for someone who has any kind of osteoarthritis or joint diseases.', 'Provide care to minimize injury and to recover from the osteoarthritis or joint diseases.', 'disease_management', '', '50', '100', '714::715::716::717::718::719::720::721', 'deactivate');
+insert into health_plans (plan_id, plan_name, plan_description, goals, category, gender, age_from, icd_include, activation_status) values (9, 'Back Problems', 'A health plan for someone who is experiencing back pain or has suffered injury of any kind, including disc disorders.', 'Enable the patient to minimize back pain, avoid complication, and recover from the back problems.', 'wellness', '', '20', '722::724::847::876', 'deactivate');
+insert into health_plans (plan_id, plan_name, plan_description, goals, category, gender, age_from, age_to, icd_include, activation_status) values (10, 'Normal Childbirth', 'A health plan designed for an expecting mother to help her prepare for a normal childbirth.', 'Enable the expecting mother to undergo a successful childbirth.', 'wellness', 'Female', '15', '45', '640::641::642::643::644::645::646::647::648::649::650::651::652::653::654::655::656::657::658::659::660::661::662::663::664::665::666::667::668::669::670::671::672::673::674::675::676::677::678::679', 'deactivate');
+insert into health_plans (plan_id, plan_name, plan_description, goals, category, gender, month_from, allergy_exclude, activation_status) values (11, 'Flu Shot', 'A annual health maintenance program for anyone who wants to reduce the chance of getting a seasonal flu. It\'s recommended for someone who is at a high risk of having serious seasonal flu-related complications or someone who lives with or provides care to high-risk population groups.', 'Administer flu shot to high-risk groups.', 'wellness', '', '6', 'Egg::Flu Shot', 'deactivate');
+insert into health_plans (plan_id, plan_name, plan_description, goals, category, gender, age_from, age_to, patient_history_include, activation_status) values (12, 'Smoking Cessation', 'A health plan for someone who is actively using any kind of tobacco products, except for smokeless tobacco.', 'Assist the patient quit smoking or switch to a smokeless tobacco within a certain period of time.', 'wellness', '', '10', '800', '||Current Tobacco', 'deactivate');
+insert into health_plans (plan_id, plan_name, plan_description, goals, category, gender, age_from, age_to, activation_status) values (13, 'Female Adults Less Than 50 Years Old', 'A general preventive health plan for female adults who are less than 50 years old.', 'Provides basic screening and health maintenance services to female adults who are generally healthy.', 'health_maintenance', 'Female', '19', '49', 'deactivate');
+insert into health_plans (plan_id, plan_name, plan_description, goals, category, gender, age_from, activation_status) values (14, 'Female Adults 50 Years and Above', 'A general preventive health plan for female adults who are 50 years and above.', 'Provides basic screening and health maintenance services to female adults who are generally healthy.', 'health_maintenance', 'Female', '50', 'deactivate');
+insert into health_plans (plan_id, plan_name, plan_description, goals, category, gender, age_from, age_to, activation_status) values (15, 'Male Adults Less Than 50 Years Old', 'A general preventive health plan for male adults who are less than 50 years old.', 'Provides basic screening and health maintenance services to male adults who are generally healthy.', 'health_maintenance', 'Male', '19', '49', 'deactivate');
+insert into health_plans (plan_id, plan_name, plan_description, goals, category, gender, age_from, activation_status) values (16, 'Male Adults 50 Years and Above', 'A general preventive health plan for male adults who are 50 years and above.', 'Provides basic screening and health maintenance services to male adults who are generally healthy.', 'health_maintenance', 'Male', '50', 'deactivate');
 #EndIf
 
 #IfNotTable extended_log
@@ -737,6 +843,94 @@ CREATE TABLE `extended_log` (
   `patient_id`  bigint(20)   DEFAULT NULL,
   PRIMARY KEY  (`id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=1;
+
+#IfNotTable health_plan_actions
+CREATE TABLE `health_plan_actions` (
+  `action_id` bigint(20) NOT NULL auto_increment,
+  `plan_id` bigint(20) DEFAULT NULL,
+  `action_content` longtext,
+  `frequency` varchar(10) DEFAULT NULL,
+  `subactions` varchar(5) DEFAULT NULL,
+  `action_targetdate` date DEFAULT NULL,
+  `reminder_timeframe` smallint(4) DEFAULT NULL,
+  `followup_timeframe` smallint(4) DEFAULT NULL,
+  `completed` varchar(3) default NULL,
+  PRIMARY KEY  (`action_id`),
+  KEY `plan_id` (`plan_id`)
+) ENGINE=MyISAM AUTO_INCREMENT=1;
+
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (1, 'Lipid Panel', 4, '', '');
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (1, 'Go for Lipid Panel #1', '', '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (1, 'Go for Lipid Panel #2', '', '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (1, 'Go for Lipid Panel #3', '', '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (1, 'Go for Lipid Panel #4', '', '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (1, 'Manage nutrition', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (1, 'Start exercise regularly', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (1, 'Check blood pressure', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (1, 'Check with doctor regarding any needed medication', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (2, 'Ask for routine physican exams', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (2, 'Ask for helmet and car seat/seatbelt use education', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (3, 'Go for a mammograph or a prostate exam.', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (3, 'Go for a chest x-ray (every 5 years)', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (3, 'Go for DRE/PSA testing (every year)', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (3, 'Ask for smoking cessation education', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (4, 'Complete mental questionnaire', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (4, 'Go for mental health education', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (5, 'Complete Asthma assessment questionnaire (every 1 year)', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (5, 'Ask for asthma inhaler', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (6, 'Monitor blood pressure every 3 months', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (6, 'Start an exercise program', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (6, 'Start a nutrition and weight loss program', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (7, 'A1C', 4, '', '');
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (7, 'Go for A1C #1', '', '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (7, 'Go for A1C #2', '', '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (7, 'Go for A1C #3', '', '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (7, 'Go for A1C #4', '', '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (7, 'Foot Exam', 2, '', '');
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (7, 'Go for foot exam #1', '', '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (7, 'Go for foot exam #2', '', '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (7, 'Go for a dilated eye exam', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (7, 'Go for a urinanalysis', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (8, 'Ask for routine physican exams', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (8, 'Start a nutrition and weight loss program', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (9, 'Ask for routine physican exams as needed', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (9, 'Ask for diagnostic tests: X-ray, MRI', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (9, 'Start an exercise program', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (9, 'Ask for ergonomic education', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (10, 'Ask for OB PANEL', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (10, 'Get prenatal education', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (10, 'Receive STD screening', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (10, 'Start a nutrition program', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (10, 'Check for immunizations and get them as needed', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (10, 'Receive education on use of alcohol, tobacco, and recreational drugs', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (10, 'Receive education on exercise and hazardous activities', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (11, 'Receive Influenza Vaccine', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (12, 'Go for smoking cessation education', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (13, 'Get a physical exam.', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (13, 'Go for a skin exam.', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (13, 'Get a mammogram.', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (13, 'Go for a pap test.', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (14, 'Get a physical exam.', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (14, 'Go for a skin exam.', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (14, 'Go for a mammogram.', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (14, 'Get a pap test.', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (14, 'Receive an osteoporosis check.', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (14, 'Go for a flu shot every year.', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (14, 'Receive an eye exam (Glucoma check).', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (14, 'Get a GI screening.', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (15, 'Go for a physical exam.', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (15, 'Get a cholesterol test.', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (15, 'Get a skin exam.', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (15, 'Go for a testicular screening.', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (16, 'Go for a physical exam.', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (16, 'Get a cholesterol test.', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (16, 'Do a skin exam.', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (16, 'Get a colorectal cancer screening.', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (16, 'Go for a testicular screening.', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (16, 'Get a prostate screening.', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (16, 'Receive an eye exam (Glucoma check).', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (16, 'Get a GI screening.', 0, '', 7);
+insert into health_plan_actions (plan_id, action_content, subactions, action_targetdate, reminder_timeframe) values (16, 'Go for a flu shot every year.', 0, '', 7);
 #EndIf
 
 #IfNotRow2D list_options list_id lists option_id disclosure_type
@@ -744,6 +938,28 @@ INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES (
 INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('disclosure_type', 'disclosure-treatment', 'Treatment', 10, 0);
 INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('disclosure_type', 'disclosure-payment', 'Payment', 20, 0);
 INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('disclosure_type', 'disclosure-healthcareoperations', 'Health Care Operations', 30, 0);
+#EndIf
+
+#IfNotTable patient_reminders
+CREATE TABLE `patient_reminders` (
+ `reminder_id` bigint(20) NOT NULL auto_increment,
+ `reminder_name` varchar(255) DEFAULT NULL COMMENT 'flu shot, smoking cessation',
+ `patient_id` bigint(20) DEFAULT NULL COMMENT 'id from patient_data table',
+ `scheduled_date` date DEFAULT NULL COMMENT 'cron job will be used to generate the reminders daily',
+ `reminder_content` longtext,
+ `sender_name` varchar(255) NOT NULL default '',
+ `email_address` varchar(255) NOT NULL default '',
+ `phone_number` varchar(255) NOT NULL default '',
+ `enroll_id` bigint(20) DEFAULT NULL,
+ `plan_id` bigint(20) DEFAULT NULL,
+ `action_id` bigint(20) DEFAULT NULL,
+ `date_modified` date DEFAULT NULL,
+ `voice_status` varchar(255) DEFAULT NULL,
+ `email_status` varchar(255) DEFAULT NULL,
+ `mail_status` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`reminder_id`),
+  KEY `patient_id` (`patient_id`)
+) ENGINE=MyISAM AUTO_INCREMENT=1;
 #EndIf
 
 #IfNotTable user_settings
@@ -769,3 +985,23 @@ INSERT INTO user_settings ( setting_user, setting_label, setting_value ) VALUES 
 INSERT INTO user_settings ( setting_user, setting_label, setting_value ) VALUES (0, 'vitals_ps_expand', '1');
 #EndIf
 
+#IfNotTable health_plan_enrollment
+CREATE TABLE `health_plan_enrollment` (
+  `enroll_id` bigint(20) NOT NULL auto_increment,
+  `patient_id` bigint(20) DEFAULT NULL,
+  `plan_id` bigint(20) DEFAULT NULL,
+  `signup_date` date DEFAULT NULL,
+  `status` varchar(255) DEFAULT NULL,
+  `action_date` varchar(255) default NULL,
+  `action_completed` varchar(255) default NULL,
+  PRIMARY KEY (`enroll_id`),
+  KEY `patient_id` (`patient_id`)
+) ENGINE=MyISAM AUTO_INCREMENT=1;
+#EndIf
+
+#IfNotRow2D list_options list_id lists option_id health_plan_categories
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('lists'          ,'health_plan_categories','Health Plan Categories',60,0);
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('health_plan_categories','disease_management' ,'Disease Management' , 5,1);
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('health_plan_categories','health_maintenance' ,'Health Maintenance' ,10,0);
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('health_plan_categories','wellness'           ,'Wellness'           ,15,0);
+#EndIf
