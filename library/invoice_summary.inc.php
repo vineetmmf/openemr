@@ -199,8 +199,14 @@ function ar_get_invoice_summary($patient_id, $encounter_id, $with_detail = false
     "a.code, a.modifier, a.memo, a.payer_type, a.adj_amount, a.pay_amount, " .
     "a.post_time, a.session_id, " .
     "s.payer_id, s.reference, s.check_date, s.deposit_date " .
+	//added by Z&H Healthcare Services
+    ",i.name " .
+	//added by Z&H Healthcare Services ends
     "FROM ar_activity AS a " .
     "LEFT OUTER JOIN ar_session AS s ON s.session_id = a.session_id " .
+	//added by Z&H Healthcare Services
+    "LEFT OUTER JOIN insurance_companies AS i ON i.id = s.payer_id " .
+	//added by Z&H Healthcare Services ends
     "WHERE a.pid = '$patient_id' AND a.encounter = '$encounter_id' " .
     "ORDER BY s.check_date, a.sequence_no");
   while ($row = sqlFetchArray($res)) {
@@ -229,6 +235,9 @@ function ar_get_invoice_summary($patient_id, $encounter_id, $with_detail = false
         $tmpkey = $paydate . $keysuff2++;
       }
       $tmp['src'] = empty($row['session_id']) ? $row['memo'] : $row['reference'];
+	  //added by Z&H Healthcare Services
+      $tmp['insurance_company'] = substr($row['name'], 0, 10);
+	  //added by Z&H Healthcare Services ends
       if ($ins_id) $tmp['ins'] = $ins_id;
       $tmp['plv'] = $row['payer_type'];
       $codes[$code]['dtl'][$tmpkey] = $tmp;

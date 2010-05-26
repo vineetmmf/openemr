@@ -106,10 +106,21 @@ function create_statement($stmt) {
  // TBD: read this from the facility table
  
  // Facility (service location)
+//edited by Z&H Healthcare Services 
+  $atres = sqlStatement("select f.name,f.street,f.city,f.state,f.postal_code from facility f
+					left join users u on f.id=u.facility_id
+  					left join  billing b on b.provider_id=u.id and b.pid = '".$stmt['pid']."'
+					where  service_location=1");
+  if ($sl_err) die($sl_err);
+  $row = sqlFetchArray($atres);
  
- $clinic_name = '[Your Clinic Name]';
- $clinic_addr = '[Your Clinic Address]';
- $clinic_csz = '[City, State Zip]';
+ // Facility (service location)
+ 
+ $clinic_name = "{$row['name']}";
+ $clinic_addr = "{$row['street']}";
+ $clinic_csz = "{$row['city']}, {$row['state']}, {$row['postal_code']}";
+//edited by Z&H Healthcare Services ends
+ 
  
  // Billing location
  $remit_name = $clinic_name;
@@ -117,12 +128,22 @@ function create_statement($stmt) {
  $remit_csz = $clinic_csz;
  
  // Contacts
- $billing_contact = '[Your billing contact name]';
- $billing_phone = '[Your billing dept phone]';
+//edited by Z&H Healthcare Services 
+  $atres = sqlStatement("select f.attn,f.phone from facility f
+					left join users u on f.id=u.facility_id
+  					left join  billing b on b.provider_id=u.id and b.pid = '".$stmt['pid']."' 
+					where billing_location=1");
+  if ($sl_err) die($sl_err);
+  $row = sqlFetchArray($atres);
+ $billing_contact = "{$row['attn']}";
+ $billing_phone = "{$row['phone']}";
+//edited by Z&H Healthcare Services ends
 
  // Text only labels
  
- $label_addressee = xl('ADDRESSEE');
+ //Z&H Healthcare Services Commented 'ADDRESSEE'
+ $label_addressee = '';//xl('ADDRESSEE');
+ //Z&H Healthcare Services Commented ends
  $label_remitto = xl('REMIT TO');
  $label_chartnum = xl('Chart Number');
  $label_insinfo = xl('Insurance information on file');
@@ -155,7 +176,14 @@ $out .= sprintf("%-30s %-s\n",$label_addressee,$label_remitto);
 $out .= sprintf("%-32s %s\n",$stmt['to'][0],$remit_name);
 $out .= sprintf("%-32s %s\n",$stmt['to'][1],$remit_addr);
 $out .= sprintf("%-32s %s\n",$stmt['to'][2],$remit_csz);
-$out .= sprintf("%-32s %-s %-s\n",$stmt['to'][3],$label_payby,$label_cards);
+
+//edited by Z&H Healthcare Services 
+if($stmt['to'][3]!='')//to avoid double blank lines the if condition is put.
+ 	$out .= sprintf("   %-32s\n",$stmt['to'][3]);
+$out .= sprintf("_________________________________________________________________\n");
+$out .= "\n";
+$out .= sprintf("%-32s\n",$label_payby.' '.$label_cards);
+//edited by Z&H Healthcare Services ends
 $out .= "\n";
 $out .= sprintf("%s_____________________  %s______ %s___________________\n",
                 $label_cardnum,$label_expiry,$label_sign);
@@ -192,13 +220,22 @@ $out .= "\n";
 
    if ($ddata['pmt']) {
     $amount = sprintf("%.2f", 0 - $ddata['pmt']);
-    $desc = xl('Paid') .' '. $ddate .': '. $ddata['src'];
+    $desc = xl('Paid') .' '. $ddate .': '. $ddata['src']
+	//added by Z&H Healthcare Services
+	.' '. $ddata['insurance_company'];//Prints the Insurance Company name
+	//added by Z&H Healthcare Services ends
    } else if ($ddata['rsn']) {
     if ($ddata['chg']) {
      $amount = sprintf("%.2f", $ddata['chg']);
-     $desc = xl('Adj') .' '.  $ddate .': ' . $ddata['rsn'];
+     $desc = xl('Adj') .' '.  $ddate .': ' . $ddata['rsn']
+	 //added by Z&H Healthcare Services
+	 .' '. $ddata['insurance_company'];//Prints the Insurance Company name
+	 //added by Z&H Healthcare Services ends
     } else {
-     $desc = xl('Note') .' '. $ddate .': '. $ddata['rsn'];
+     $desc = xl('Note') .' '. $ddate .': '. $ddata['rsn']
+	 //added by Z&H Healthcare Services
+	 .' '. $ddata['insurance_company'];//Prints the Insurance Company name
+	 //added by Z&H Healthcare Services ends
     }
    } else if ($ddata['chg'] < 0) {
     $amount = sprintf("%.2f", $ddata['chg']);
