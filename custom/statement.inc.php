@@ -135,7 +135,7 @@ function create_statement($stmt) {
 
  // Text only labels
  
- $label_addressee = '';//xl('ADDRESSEE');//Client Specific
+ $label_addressee = xl('ADDRESSEE');
  $label_remitto = xl('REMIT TO');
  $label_chartnum = xl('Chart Number');
  $label_insinfo = xl('Insurance information on file');
