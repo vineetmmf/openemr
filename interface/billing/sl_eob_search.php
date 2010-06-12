@@ -77,7 +77,7 @@ function upload_file_to_client($file_to_send) {
 function upload_file_to_client_pdf($file_to_send) {
 //Function reads a text file and converts to pdf.
 
-  global $webserver_root;
+  global $STMT_TEMP_FILE_PDF;
   $pdf =& new Cezpdf('LETTER');//pdf creation starts
   $pdf->ezSetMargins(36,0,36,0);
   $pdf->selectFont($GLOBALS['fileroot'] . "/library/fonts/Courier.afm");
@@ -102,7 +102,7 @@ function upload_file_to_client_pdf($file_to_send) {
 	$countline++; 
    }
 	
-	$fh = @fopen("$webserver_root/edi/openemr_statements.pdf", 'w');//stored to a pdf file
+	$fh = @fopen($STMT_TEMP_FILE_PDF, 'w');//stored to a pdf file
     if ($fh) {
       fwrite($fh, $pdf->ezOutput());
       fclose($fh);
@@ -111,10 +111,10 @@ function upload_file_to_client_pdf($file_to_send) {
   header("Expires: 0");
   header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
   header("Content-Type: application/force-download");
-  header("Content-Length: " . filesize("$webserver_root/edi/openemr_statements.pdf"));
-  header("Content-Disposition: attachment; filename=openemr_statements.pdf");
+  header("Content-Length: " . filesize($STMT_TEMP_FILE_PDF));
+  header("Content-Disposition: attachment; filename=" . basename($STMT_TEMP_FILE_PDF));
   header("Content-Description: File Transfer");
-  readfile("$webserver_root/edi/openemr_statements.pdf");
+  readfile($STMT_TEMP_FILE_PDF);
   // flush the content to the browser. If you don't do this, the text from the subsequent
   // output from this script will be in the file instead of sent to the browser.
   flush();

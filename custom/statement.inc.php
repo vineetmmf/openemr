@@ -24,6 +24,7 @@
 //
 
 $STMT_TEMP_FILE = $GLOBALS['temporary_files_dir'] . "/openemr_statements.txt";
+$STMT_TEMP_FILE_PDF = $GLOBALS['temporary_files_dir'] . "/openemr_statements.pdf";
 
 $STMT_PRINT_CMD = $GLOBALS['print_command']; 
 
