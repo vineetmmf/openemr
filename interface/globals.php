@@ -44,6 +44,10 @@ if (!isset($fake_register_globals)) {
 $fake_register_globals =
 	$fake_register_globals && (strpos($_SERVER['REQUEST_URI'],"myadmin") === FALSE);
 
+// Debugging for security code walk thru.
+error_log("Fake Globals Flag: ".$fake_register_globals." ".$_SERVER['SCRIPT_FILENAME'], 0);
+error_log("Undo Magic Quotes Flag: ".$sanitize_all_escapes." ".$_SERVER['SCRIPT_FILENAME'], 0);
+
 // Emulates register_globals = On.  Moved to here from the bottom of this file
 // to address security issues.  Need to change everything requiring this!
 if ($fake_register_globals) {
