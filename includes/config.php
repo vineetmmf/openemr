@@ -1,5 +1,5 @@
 <?php
-/* $Id$ */
+/* $Id: config.php,v 1.19 2009/08/16 09:42:24 bradymiller Exp $ */
 //  ------------------------------------------------------------------------ //
 //                OpenEMR Electronic Medical Records System                  //
 //                    Copyright (c) 2005-2008 oemr.org                       //
@@ -28,30 +28,26 @@
 // To use RelayHealth, Call 888-PHYAURA (749-2872) and press 1 to Sign-up
 // for the service and receive your Client ID.  Then you may uncomment
 // and alter the following as appropriate.
-//
-// $GLOBALS['ssi']['rh']['ApplicationName'] = 'PhyauraSSI';
-// $GLOBALS['ssi']['rh']['PartnerName']     = 'Phyaura';
-// $GLOBALS['ssi']['rh']['location']        = 'https://api.integration.relayhealth.com/SSI/SingleSignIn.svc';
-// $GLOBALS['ssi']['rh']['wsdl']            = 'https://api.integration.relayhealth.com/SSI/SingleSignIn.svc?wsdl';
+//include_once("phyaura.inc.php");
 
-$GLOBALS['oer_config']['freeb']['claim_file_dir'] 	= "/usr/share/freeb/public/";
+$GLOBALS['oer_config']['freeb']['claim_file_dir']   = "/usr/share/freeb/public/";
 //currently can be pdf or txt
-$GLOBALS['oer_config']['freeb']['default_format'] 	= "pdf";
-$GLOBALS['oer_config']['freeb']['username'] 		= "freeb";
-$GLOBALS['oer_config']['freeb']['password'] 		= "12345";
-$GLOBALS['oer_config']['freeb']['print_command'] 	= "/usr/bin/lpr";
-$GLOBALS['oer_config']['freeb']['printer_name'] 	= "HP_LaserJet4L";
+$GLOBALS['oer_config']['freeb']['default_format']   = "pdf";
+$GLOBALS['oer_config']['freeb']['username']         = "freeb";
+$GLOBALS['oer_config']['freeb']['password']         = "12345";
+$GLOBALS['oer_config']['freeb']['print_command']    = "/usr/bin/lpr";
+$GLOBALS['oer_config']['freeb']['printer_name']     = "HP_LaserJet4L";
 // This does not seem useful for PDF HCFAs, see freeb/targetbin/ascii2pdf instead:
-$GLOBALS['oer_config']['freeb']['printer_extras'] 	= "-o PageSize=Letter -o portrait";
+$GLOBALS['oer_config']['freeb']['printer_extras']   = "-o PageSize=Letter -o portrait";
 // Set this to make an additional copy of HCFA PDFs in the specified directory,
 // e.g. for an external billing service. You must end this path with a slash:
 $GLOBALS['oer_config']['freeb']['copy_pdfs_to'] = '';
 
 //used differently by different applications, intuit programs only like numbers
-$GLOBALS['oer_config']['ofx']['bankid'] 	= "123456789";
+$GLOBALS['oer_config']['ofx']['bankid']     = "123456789";
 
 //you can use this to match to an existing account in you accounting application
-$GLOBALS['oer_config']['ofx']['acctid'] 	= "123456789";
+$GLOBALS['oer_config']['ofx']['acctid']     = "123456789";
 
 //use FL for FLORIDA compatible format, leave blank for default
 $GLOBALS['oer_config']['prescriptions']['format'] = "";
@@ -146,7 +142,7 @@ $GLOBALS['oer_config']['druglabels']['logo'] = dirname(__FILE__) .
 
 $GLOBALS['oer_config']['documents']['repository'] = $GLOBALS['oer_config']['documents']['repopath'];
 if (strpos($GLOBALS['oer_config']['documents']['repository'],"/") !== 0) {
-	$GLOBALS['oer_config']['documents']['repository'] = realpath(dirname(__FILE__) . "/../" . $GLOBALS['oer_config']['documents']['repository']) . "/";
+    $GLOBALS['oer_config']['documents']['repository'] = realpath(dirname(__FILE__) . "/../" . $GLOBALS['oer_config']['documents']['repository']) . "/";
 }
 
 ?>

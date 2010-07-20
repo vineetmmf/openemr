@@ -19,7 +19,7 @@ if (isset($_GET['auth']) && ($_GET['auth'] == "login") && isset($_POST['authUser
     }
 //If password expiration option is enabled call authCheckExpired() to check whether login user password is expired or not
     if($GLOBALS['password_expiration_days'] != 0){
-    	authCheckExpired();
+        authCheckExpired();
     }
     $ip=$_SERVER['REMOTE_ADDR'];
     if (!authNewSession($_POST['authUser'], $_POST['authPass'], $_POST['authProvider']))
@@ -88,7 +88,7 @@ function authNewSession ($user, $pass, $provider)
 
     // get details about the user
     $authDB = sqlQuery("select id, password, authorized, see_auth".
-                        ", cal_ui, active ".
+                        ", cal_ui, active, ssi_relayhealth ".
                         " from users where username = '$user'");
 
     // if the user is NOT active, get out
@@ -111,6 +111,7 @@ function authNewSession ($user, $pass, $provider)
             $_SESSION['authId'] = $authDB{'id'};
             $_SESSION['cal_ui'] = $authDB['cal_ui'];
             $_SESSION['userauthorized'] = $authDB['authorized'];
+            $_SESSION['rh_api_id'] = trim($authDB['ssi_relayhealth']);
             // Some users may be able to authorize without being providers:
             if ($authDB['see_auth'] > '2') $_SESSION['userauthorized'] = '1';
             return true;
@@ -169,7 +170,7 @@ function authCheckExpired()
 {
   $auser=formData('authUser','P');
   $result = sqlStatement("select pwd_expiration_date from users where username = '".$auser."'");
-  if($row = sqlFetchArray($result)) 
+  if($row = sqlFetchArray($result))
   {
     $pwd_expires = $row['pwd_expiration_date'];
   }
@@ -294,13 +295,13 @@ function UpdatePasswordHistory($userid,$pwd)
     }
     if (($pwd != $previous_pwd1) && ($pwd != $previous_pwd2) && ($pwd != $previous_pwd3)) {
         sqlStatement("update users set pwd_history2='$previous_pwd2', pwd_history1='$previous_pwd1',password='$pwd' where id=$userid");
-	if($GLOBALS['password_expiration_days'] != 0){
-	$exp_days=$GLOBALS['password_expiration_days'];
+    if($GLOBALS['password_expiration_days'] != 0){
+    $exp_days=$GLOBALS['password_expiration_days'];
         $exp_date = date('Y-m-d', strtotime("+$exp_days days"));
         sqlStatement("update users set pwd_expiration_date='$exp_date' where id=$userid");
-	}
+    }
         return true;
-    } 
+    }
     else {
         return false;
     }
