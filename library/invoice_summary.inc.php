@@ -134,8 +134,14 @@ function ar_get_invoice_summary($patient_id, $encounter_id, $with_detail = false
   $keysuff2 = 5000;
 
   // Get charges from services.
+  //echo "SELECT " .
+//    "date,id, code_type, code, modifier, code_text, fee " .
+//    "FROM billing WHERE " .
+//    "pid = '$patient_id' AND encounter = '$encounter_id' AND " .
+//    "activity = 1 AND fee != 0.00 ORDER BY id";
+
   $res = sqlStatement("SELECT " .
-    "date, code_type, code, modifier, code_text, fee " .
+    "date,id, code_type, code, modifier, code_text, fee " .
     "FROM billing WHERE " .
     "pid = ? AND encounter = ? AND " .
     "activity = 1 AND fee != 0.00 ORDER BY id", array($patient_id,$encounter_id) );
@@ -146,6 +152,10 @@ function ar_get_invoice_summary($patient_id, $encounter_id, $with_detail = false
     if ($row['code_type'] == 'COPAY') {
       $code = 'CO-PAY';
       $codes[$code]['bal'] += $amount;
+	   //code added by virendra on 19-6-2010
+		 $codes[$code]['id']=$row['id'];
+		 
+	  //end
     }
     else {
       $code = strtoupper($row['code']);
@@ -153,6 +163,11 @@ function ar_get_invoice_summary($patient_id, $encounter_id, $with_detail = false
       if ($row['modifier']) $code .= ':' . strtoupper($row['modifier']);
       $codes[$code]['chg'] += $amount;
       $codes[$code]['bal'] += $amount;
+	  //code added by virendra on 19-6-2010
+		 $codes[$code]['id']=$row['id'];
+	  //end
+	 
+	  
     }
     // Add the details if they want 'em.
     if ($with_detail) {
@@ -162,10 +177,15 @@ function ar_get_invoice_summary($patient_id, $encounter_id, $with_detail = false
         $tmp['pmt'] = 0 - $amount;
         $tmp['src'] = 'Pt Paid';
         $tmp['plv'] = 0;
+		//code added by virendra on 19-6-2010
+		$tmp['id']=$row['id'];
+	  	$tmp['seqn']=$row['sequence_no'];
+		//end
         $tmpkey = substr($row['date'], 0, 10) . $keysuff2++;
       }
       else {
         $tmp['chg'] = $amount;
+		$tmp['id'] = $row['id'];
         $tmpkey = "          " . $keysuff1++;
       }
       $codes[$code]['dtl'][$tmpkey] = $tmp;
@@ -195,9 +215,9 @@ function ar_get_invoice_summary($patient_id, $encounter_id, $with_detail = false
   }
 
   // Get payments and adjustments.
-  $res = sqlStatement("SELECT " .
+ 	$res = sqlStatement("SELECT " .
     "a.code, a.modifier, a.memo, a.payer_type, a.adj_amount, a.pay_amount, " .
-    "a.post_time, a.session_id, " .
+    "a.post_time, a.session_id,a.sequence_no,a.pid,a.encounter, " .
     "s.payer_id, s.reference, s.check_date, s.deposit_date " .
     ",i.name " .
     "FROM ar_activity AS a " .
@@ -214,9 +234,11 @@ function ar_get_invoice_summary($patient_id, $encounter_id, $with_detail = false
     $codes[$code]['bal'] -= $row['adj_amount'];
     $codes[$code]['chg'] -= $row['adj_amount'];
     $codes[$code]['adj'] += $row['adj_amount'];
+	
+
     if ($ins_id) $codes[$code]['ins'] = $ins_id;
     // Add the details if they want 'em.
-    if ($with_detail) {
+    if ($with_detail) { 
       if (! $codes[$code]['dtl']) $codes[$code]['dtl'] = array();
       $tmp = array();
       $paydate = empty($row['deposit_date']) ? substr($row['post_time'], 0, 10) : $row['deposit_date'];
@@ -234,9 +256,12 @@ function ar_get_invoice_summary($patient_id, $encounter_id, $with_detail = false
       $tmp['insurance_company'] = substr($row['name'], 0, 10);
       if ($ins_id) $tmp['ins'] = $ins_id;
       $tmp['plv'] = $row['payer_type'];
+	  $tmp['ecid']=$row['encounter'];
+	  $tmp['seqn']=$row['sequence_no'];
       $codes[$code]['dtl'][$tmpkey] = $tmp;
     }
   }
+ 
   return $codes;
 }
 

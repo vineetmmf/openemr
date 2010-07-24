@@ -186,6 +186,25 @@ function updateFields(payField, adjField, balField, coPayField, isFirstProcCode)
 }
 
 </script>
+<!--Add delete funtion code on 5 may by virendra...-->
+ 
+<script type="text/javascript">
+function npopup(billid,pid,ecid,seqn,act,condition) {
+	 window.open('sl_eob_invoice_edit.php?billid='+billid+'&id=' + pid+'&ecid='+ecid+'&seqn='+seqn+'&act='+act+'&condition='+condition, '_blank', 	'width=400,height=450,resizable=1');
+ 	return false;
+}
+<!--Add billing note funtion for invoice code on 11 may by virendra...-->
+function npopupbilling(pid) {
+ window.open('sl_eob_patient_note_billing.php?patient_id=' + pid, '_blank', 'width=500,height=250,resizable=1');
+ return false;
+}
+<!--Add billing note funtion code for patient on 12 may by virendra...-->
+function npopup_pt_billing(pid) {
+ window.open('sl_eob_patient_note.php?patient_id=' + pid, '_blank', 'width=500,height=250,resizable=1');
+ return false;
+}
+</script>
+ <!--end funtion code on 5 & 11 may by virendra...-->
 </head>
 <body leftmargin='0' topmargin='0' marginwidth='0' marginheight='0'>
 <?php
@@ -586,6 +605,18 @@ function updateFields(payField, adjField, balField, coPayField, isFirstProcCode)
   </td>
  </tr>
 <?php } ?>
+
+<!--code for invoice note -->
+ <tr>
+  <td>
+   <?php xl('Invoice Note:','e')?>
+  </td>
+  <td colspan='3' style='color:red'>
+   <?php echo $ferow['invoice_billing_note'] ?> &nbsp;&nbsp;<input type="button" name="billing_note_invoice" value="Add Invoice Note" onClick="return npopupbilling(<?php echo $ferow['pid'] ?>)">
+  </td>
+ </tr>
+<?php //} ?>
+<!--end of code for invoice note-->
  <tr>
   <td height="1">
   </td>
@@ -619,6 +650,10 @@ function updateFields(payField, adjField, balField, coPayField, isFirstProcCode)
   <td class="dehead">
    <?php xl('Reason','e')?>
   </td>
+  <!--Add delete funtion code on 7 may by virendra...-->
+  <td class="dehead" colspan="2">
+   <?php xl('Action','e')?>  </td> 
+    <!--end  delete funtion code on 7 may by virendra...-->
  </tr>
 <?php
   $firstProcCodeIndex = -1;
@@ -657,10 +692,10 @@ function updateFields(payField, adjField, balField, coPayField, isFirstProcCode)
    <?php echo $dispcode; $dispcode = "" ?>
   </td>
   <td class="detail" align="right">
-   <?php bucks($tmpchg) ?>
+   <?php bucks($tmpchg);?>
   </td>
-  <td class="detail" align="right">
-   &nbsp;
+  <td class="detail" align="right">&nbsp;
+   
   </td>
   <td class="detail">
    <?php
@@ -683,6 +718,32 @@ function updateFields(payField, adjField, balField, coPayField, isFirstProcCode)
   <td class="detail">
    <?php echo $ddata['rsn'] ?>
   </td>
+   <!--start code to add edit and delete on 5 may by virendra-->
+  <?php 
+		   if($tmpchg)
+		   {
+		   		$condition="charge";
+				$mainid=$ddata['id'];
+		   }
+		   elseif($code=="CO-PAY")
+		   {
+		   		$condition="copay";
+				$mainid=$ddata['id'];
+		   }
+		   else
+		   {
+		   		$condition="pay";
+				$mainid=$cdata['id'];
+		   }
+		   
+	?>
+   <td class="detail">
+   <a href="#" onClick="return npopup('<? echo $mainid ?>','<?php echo $patient_id ?>','<?php echo $ddata[ecid]?>','<?php echo $ddata[seqn]?>','edit','<?php echo $condition ?>')">Edit</a>
+   </td>
+   <td class="detail">
+   <a onClick="return confirm('Are you sure !');" href="sl_eob_invoice_edit.php?id=<?php echo $_GET['id'] ?>&mainid=<?php echo $mainid ?>&pid=<?php echo $patient_id ?>&ecid=<?php echo $ddata['ecid']?>&seqn=<?php echo $ddata['seqn']?>&act=delete&condition=<?php echo $condition ?>">Delete</a>
+   </td>
+  <!--end code to add edit and delete on 5 may by virendra-->
  </tr>
 <?php
    } // end of prior detail line
@@ -691,8 +752,8 @@ function updateFields(payField, adjField, balField, coPayField, isFirstProcCode)
   <td class="detail">
    <?php echo $dispcode; $dispcode = "" ?>
   </td>
-  <td class="detail" align="right">
-   &nbsp;
+  <td class="detail" align="right">&nbsp;
+   
   </td>
   <td class="detail" align="right">
    <input type="hidden" name="form_line[<?php echo $code ?>][bal]" value="<?php bucks($cdata['bal']) ?>">
@@ -729,7 +790,7 @@ function updateFields(payField, adjField, balField, coPayField, isFirstProcCode)
    <input type="text" name="form_line[<?php echo $code ?>][adj]" size="10"
     value='<?php echo $totalAdjAmount ?>' 
     style="background-color:<?php echo $bgcolor ?>" />
-   &nbsp; <a href="" onclick="return writeoff('<?php echo $code ?>')">W</a>
+   &nbsp; <a href="" onClick="return writeoff('<?php echo $code ?>')">W</a>
   </td>
   <td class="detail">
    <select name="form_line[<?php echo $code ?>][reason]"
@@ -750,6 +811,10 @@ while ($orow = sqlFetchArray($ores)) {
     // to the reason.
 ?>
   </td>
+  <!--start code to add edit and delete on 12 may by virendra-->
+   <td class="detail">&nbsp;</td>
+   <td class="detail">&nbsp;</td>
+  <!--end code to add edit and delete on 12 may by virendra-->
  </tr>
 <?php
   } // end of code
