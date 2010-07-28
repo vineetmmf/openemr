@@ -86,6 +86,7 @@
  include_once("../globals.php");
  include_once($GLOBALS['fileroot']."/library/acl.inc");
  include_once($GLOBALS['fileroot']."/custom/code_types.inc.php");
+ include_once("../../library/ssi.inc");
  include_once($GLOBALS['fileroot']."/library/patient.inc");
 
  // This array defines the list of primary documents that may be
@@ -1121,12 +1122,48 @@ if (!empty($reg)) {
 <br /><hr />
 
 <?php
- // To use RelayHealth, see comments and parameters in includes/config.php.
- if (!empty($GLOBALS['ssi']['rh'])) {
-  include_once("../../library/ssi.inc");
-  echo getRelayHealthLink() ."<br /><hr />\n";
- }
+
+// To use RelayHealth, see comments and parameters in
+// includes/config.php
+// includes/phyaura.inc.php
+
+if( $GLOBALS['rh_api'] ) {
 ?>
+
+    <style type="text/css">
+    a.rhesuites1:link {color:#ffffff;margin-top:4px;text-decoration:none;}
+    a.rhesuites1:visited {color:#ffffff;margin-top:4px;text-decoration:none;}
+    a.rhesuites1:hover {color:#ff0000;margin-top:4px;text-decoration:none;}
+    a.rhesuites:link {color:#ffffff;margin-top:4px;margin-left:12px;text-decoration:none;}
+    a.rhesuites:visited {color:#ffffff;margin-top:4px;margin-left:12px;text-decoration:none;}
+    a.rhesuites:hover {color:#ff0000;margin-top:4px;margin-left:12px;text-decoration:none;}
+    </style>
+
+<?php
+    if( $_SESSION['rh_api_id'] != "" )
+    {
+        echo getRelayHealthLink('home');
+        echo "<br />";
+        if( $GLOBALS['rh_api_aaid'] != "" )
+        {
+            echo getRelayHealthLink('escripts');
+            echo "<br />";
+        }
+        echo getRelayHealthLink('inbox');
+        echo getRelayHealthLink('renewals');
+    }else{
+        echo getRelayHealthLink('default');
+    }
+    echo "<br /><hr />\n";
+}
+?>
+
+<script type="text/javascript">
+$().ready(function() {
+      htmlobj=$.ajax({url:"rh_message_count.php",async:false});
+      $("#rhmsgcount").html(htmlobj.responseText);
+});
+</script>
 
 <div id='current_patient' style = 'display:none'>
 <b><?php xl('None','e'); ?></b>

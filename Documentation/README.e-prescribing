@@ -1,5 +1,7 @@
 PHYAURA SureScripts certified e-prescribing for OpenEMR Readme Document
 1-1-2009
+Contributors :  Phyaura, LLC, Connie Douglas, Bill Himmelstoss
+
 
 Purpose
 
@@ -15,7 +17,7 @@ OpenEMR has no effective method of sending prescriptions electronically via
 SureScripts
 OpenEMR has no standardized method of maintaining drug databases
 OpenEMR has no method of checking drug-drug interaction or checking drug-allergy
-or condition 
+or condition
 OpenEMR lacks the means of standard communication with patients online regarding
 prescriptions
 
@@ -28,7 +30,7 @@ certified and currently removes the need for OpenEMR users to print or fax
 prescriptions.  This e-prescribing service meets all of the necessary
 requirements to receive the 2% Medicare bonus in 2009 and 2010.
 
-How does it work? 
+How does it work?
 
 OpenSource code created by PHYAURA has been donated to the OpenEMR community
 that will enable a link on the left menu bar. There is also a new field in user
@@ -60,3 +62,85 @@ If you are interested in seeing demo before signing up call 888-PHYAURA or
 
 Jude A. Pierre, MD
 Phyaura, LLC
+
+
+
+Technical Notes : SOAP API Integration (June 2010)
+
+Summary :
+
+The SOAP API integration provides the ability to navigate from the EMR into a specific Relay Health screen with one click saving the user from logging in twice. Once the required credentials have been established in the system, links are made available in the navigation list which land the authenticated user on the appropriate screen.
+
+
+Requirements :
+
+A SingleSignIn ID is required for a user to utilize this functionality. Registration must be completed and the SSI ID must be available in the OpenEMR.users table. Configuration of new globals is located in /includes/phyaura.inc.php which is included in the source from /includes/config.php
+
+
+Files :
+
+The following files are including in this package -
+/includes/config.inc.php
+/includes/phyaura.inc.php
+/interface/jump_to_RelayHealth.php
+/interface/main/left_nav.php
+/interface/main/rh_message_count.php
+/library/auth.inc
+/library/ssi.inc
+/library/relayhealth.inc.php
+
+
+Description :
+
+Direct links were added to Relay Health user screens to be available for registered users in the EMR. New global and session variables were added to enable the functionality of this API integration.
+
+The session variable $_SESSION['rh_api_id'] was added to contain the SingleSignIn ID which is a unique user ID that should be provided to Phyaura, LLC for provider/staff registration (or assigned to a provider/staff user by Phyaura, LLC). The SSI ID is used for authentication by the API and is saved as 'rh_api_id' in /library/auth.inc along with the existing login session variables.
+( auth.inc )
+
+The new globals are as follows :
+
+boolean rh_api             // enables the api and makes the links visible
+string rh_api_env          // sets the environment for (T) test or (P) production
+string rh_api_aaid         // sets the Relay Health Assigning Authority ID (only necessary for patient chart interaction)
+string RHApplicationName
+string RHApplicationPassword
+string RHPartnerName
+string RHssilocation
+string RHssiwsdl
+string RHmsglocation
+string RHmsgwsdl
+
+
+Four new links were added to the left navigation which are only available if the global rh_api is true and the session rh_api_id is set. In addition, the 'e-scripts' link is only available if the global rh_api_aaid is set. The new links appear
+
+in /interface/main/left_nav.php
+( left_nav.php )
+
+The links are as follows :
+
+    E-suites -
+    This is the main link and will log the user into Relay Health and navigate the user to the Welcome screen.
+
+    e-scripts -
+    This link will log the user into Relay Health and navigate the user to the e-scripting screen to create a new e-script. If a patient has been selected in the EMR and there has been an MRN associated with the patient record in Relay Health, the patient record will be loaded into the Create E-script form.
+
+    e-messages -
+    This link will log the user into Relay Health and navigate the user to their Inbox to view new messages.
+    The message count follows the link and displays the number of unread messages in the inbox.
+
+    e-renewals -
+    This link will log the user into Relay Health and navigate the user to the Renewals screen.
+
+
+The links are created from an included file located in : /library/ssi.inc
+The method creates the link based on the destination key passed from left_nav.php
+( ssi.inc )
+
+The links point to jump_to_RelayHealth.php which is where the SOAP request is made using the requested destination and the session and global settings and credentials.
+( jump_to_RelayHealth.php )
+
+The class map for the SOAP request is located in : /library/relayhealth.inc.php
+( relayhealth.inc.php )
+
+For the count messages (0) following the e-messages link, jquery is used to make an ajax request to rh_message_count.php which makes a soap request and update the link to show the count according to the timeframe set in the configuration
+( rh_message_count.php )
