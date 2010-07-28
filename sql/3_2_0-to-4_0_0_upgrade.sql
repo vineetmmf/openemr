@@ -726,3 +726,20 @@ ALTER TABLE transactions ADD refer_reply_date date DEFAULT NULL;
 ALTER TABLE transactions ADD reply_related_code varchar(255) NOT NULL DEFAULT '';
 #EndIf
 
+#IfNotRow2D list_options list_id reconcilestatus option_id current
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('reconcilestatus', 'Current', 'Current', 10,  1);
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('reconcilestatus', 'Cancelled', 'Cancelled', 20,  0);
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('reconcilestatus', 'Discontinued', 'Discontinued', 30,  0);
+#EndIf
+
+#IfMissingColumn lists reconcilestatus
+ALTER TABLE lists ADD COLUMN reconcilestatus VARCHAR(255);
+#EndIf
+
+#IfMissingColumn lists reconcilenote
+ALTER TABLE lists ADD COLUMN reconcilenote TEXT;
+#EndIf
+
+#IfMissingColumn lists reconciledate
+ALTER TABLE lists ADD COLUMN reconciledate DATE;
+#EndIf
