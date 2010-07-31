@@ -737,6 +737,12 @@ CREATE TABLE `extended_log` (
   `patient_id`  bigint(20)   DEFAULT NULL,
   PRIMARY KEY  (`id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=1;
+
+#IfNotRow2D list_options list_id reconcilestatus option_id Current
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('reconcilestatus', 'Current', 'Current', 10,  1);
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('reconcilestatus', 'Cancelled', 'Cancelled', 20,  0);
+INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('reconcilestatus', 'Discontinued', 'Discontinued', 30,  0);
+>>>>>>> eb4b497264827d97ec0c78efda1adfb534d1179c:sql/3_2_0-to-4_0_0_upgrade.sql
 #EndIf
 
 #IfNotRow2D list_options list_id lists option_id disclosure_type
@@ -744,4 +750,16 @@ INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES (
 INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('disclosure_type', 'disclosure-treatment', 'Treatment', 10, 0);
 INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('disclosure_type', 'disclosure-payment', 'Payment', 20, 0);
 INSERT INTO list_options ( list_id, option_id, title, seq, is_default ) VALUES ('disclosure_type', 'disclosure-healthcareoperations', 'Health Care Operations', 30, 0);
+#EndIf
+
+#IfMissingColumn lists reconcilestatus
+ALTER TABLE lists ADD COLUMN reconcilestatus VARCHAR(255);
+#EndIf
+
+#IfMissingColumn lists reconcilenote
+ALTER TABLE lists ADD COLUMN reconcilenote TEXT;
+#EndIf
+
+#IfMissingColumn lists reconciledate
+ALTER TABLE lists ADD COLUMN reconciledate DATE;
 #EndIf
