@@ -4,12 +4,19 @@
 // as published by the Free Software Foundation; either version 2
 // of the License, or (at your option) any later version.
 
+//SANITIZE ALL ESCAPES
+$sanitize_all_escapes=true;
+
+//STOP FAKE REGISTER GLOBALS
+$fake_register_globals=false;
+
 require_once("../../globals.php");
 require_once("$srcdir/forms.inc");
 require_once("$srcdir/calendar.inc");
 require_once("$srcdir/acl.inc");
 require_once("$srcdir/formatting.inc.php");
 require_once("$srcdir/patient.inc");
+require_once("../summary/clinical_alerts_functions.php");
 ?>
 <html>
 
@@ -22,7 +29,12 @@ require_once("$srcdir/patient.inc");
 
 <script type="text/javascript" src="<?php echo $GLOBALS['webroot'] ?>/library/dialog.js"></script>
 
-
+<?php
+if ($pid && $GLOBALS['clinical_decision_rules_and_patient_reminders']) {
+ insert_alert($pid);// Check and insert alerts for patient.
+ check_alerts($pid);// Check and show popup alerts.
+}
+?>
 
 <link rel="stylesheet" href="<?php echo $css_header;?>" type="text/css">
 <link rel="stylesheet" type="text/css" href="../../../library/js/fancybox/jquery.fancybox-1.2.6.css" media="screen" />
@@ -40,7 +52,7 @@ require_once("$srcdir/patient.inc");
 
  // Process click on Delete link.
  function deleteme() {
-  dlgopen('../deleter.php?encounterid=<?php echo $encounter; ?>', '_blank', 500, 450);
+  dlgopen('../deleter.php?encounterid=<?php echo htmlspecialchars($encounter, ENT_QUOTES); ?>', '_blank', 500, 450);
   return false;
  }
 
@@ -63,14 +75,14 @@ function expandcollapse(atr){
 		for(i=1;i<15;i++){
 			var mydivid="divid_"+i;var myspanid="spanid_"+i;
 				var ele = document.getElementById(mydivid);	var text = document.getElementById(myspanid);
-				ele.style.display = "block";text.innerHTML = "<?php xl('Collapse','e'); ?>";
+				ele.style.display = "block";text.innerHTML = "<?php echo htmlspecialchars(xl('Collapse'), ENT_QUOTES); ?>";
 		}
   	}
 	else {
 		for(i=1;i<15;i++){
 			var mydivid="divid_"+i;var myspanid="spanid_"+i;
 				var ele = document.getElementById(mydivid);	var text = document.getElementById(myspanid);
-				ele.style.display = "none";	text.innerHTML = "<?php xl('Expand','e'); ?>";
+				ele.style.display = "none";	text.innerHTML = "<?php echo htmlspecialchars(xl('Expand'), ENT_QUOTES); ?>";
 		}
 	}
 
@@ -81,11 +93,11 @@ function divtoggle(spanid, divid) {
 	var text = document.getElementById(spanid);
 	if(ele.style.display == "block") {
 		ele.style.display = "none";
-		text.innerHTML = "<?php xl('Expand','e'); ?>";
+		text.innerHTML = "<?php echo htmlspecialchars(xl('Expand'), ENT_QUOTES); ?>";
   	}
 	else {
 		ele.style.display = "block";
-		text.innerHTML = "<?php xl('Collapse','e'); ?>";
+		text.innerHTML = "<?php echo htmlspecialchars(xl('Collapse'), ENT_QUOTES); ?>";
 	}
 }
 </script>
@@ -119,7 +131,7 @@ $encounter_date = date("Y-m-d",strtotime($dateres["date"]));
 ?>
 
 <div style='float:left'>
-<span class="title"><?php echo oeFormatShortDate($encounter_date) . " " . xl("Encounter"); ?> </span>
+<span class="title"><?php echo htmlspecialchars(oeFormatShortDate($encounter_date) . " " . xl("Encounter"), ENT_QUOTES); ?> </span>
 <?php
 $auth_notes_a  = acl_check('encounters', 'notes_a');
 $auth_notes    = acl_check('encounters', 'notes');
@@ -134,7 +146,7 @@ if (is_numeric($pid)) {
     }
     // Check for no access to the encounter's sensitivity level.
     $result = sqlQuery("SELECT sensitivity FROM form_encounter WHERE " .
-                        "pid = '$pid' AND encounter = '$encounter' LIMIT 1");
+                        "pid = ? AND encounter = ? LIMIT 1", array($pid, $encounter));
     if ($result['sensitivity'] && !acl_check('sensitivities', $result['sensitivity'])) {
         $auth_notes_a = $auth_notes = $auth_relaxed = 0;
     }
@@ -143,9 +155,9 @@ if (is_numeric($pid)) {
 </div>
 <div style='float:left;margin-left:10px'>
 <?php if (acl_check('admin', 'super')) { ?>
-    <a href='toggledivs(this.id,this.id);' class='css_button' onclick='return deleteme()'><span><?php echo xl('Delete') ?></span></a>
-	&nbsp;&nbsp;&nbsp;<a href="#" onClick='expandcollapse("expand");' style="font-size:80%;"><?php xl('Expand All','e'); ?></a>
-	&nbsp;&nbsp;&nbsp;<a  style="font-size:80%;" href="#" onClick='expandcollapse("collapse");'><?php xl('Collapse All','e'); ?></a>
+    <a href='toggledivs(this.id,this.id);' class='css_button' onclick='return deleteme()'><span><?php echo htmlspecialchars(xl('Delete'), ENT_QUOTES); ?></span></a>
+	&nbsp;&nbsp;&nbsp;<a href="#" onClick='expandcollapse("expand");' style="font-size:80%;"><?php echo htmlspecialchars(xl('Expand All'), ENT_QUOTES); ?></a>
+	&nbsp;&nbsp;&nbsp;<a  style="font-size:80%;" href="#" onClick='expandcollapse("collapse");'><?php echo htmlspecialchars(xl('Collapse All'), ENT_QUOTES); ?></a>
 <?php } ?>
 </div>
 <br/>
@@ -177,11 +189,11 @@ if (is_numeric($pid)) {
             //but until any other form has a problem with this, I will just
             //make an exception here for CAMOS and allow it to carry out this
             //functionality for all other forms.  --Mark
-	        echo '<tr title="' . xl('Edit form') . '" '.
-       		      'id="'.$formdir.'~'.$iter['form_id'].'">';
+	        echo '<tr title="' . htmlspecialchars(xl('Edit form'), ENT_QUOTES) . '" '.
+       		      'id="'.htmlspecialchars($formdir, ENT_QUOTES).'~'.htmlspecialchars($iter['form_id'], ENT_QUOTES).'">';
         } else {
-            echo '<tr title="' . xl('Edit form') . '" '.
-                  'id="'.$formdir.'~'.$iter['form_id'].'" class="text onerow">';
+            echo '<tr title="' . htmlspecialchars(xl('Edit form'), ENT_QUOTES) . '" '.
+                  'id="'.htmlspecialchars($formdir, ENT_QUOTES).'~'.htmlspecialchars($iter['form_id'], ENT_QUOTES).'" class="text onerow">';
         }
         $user = getNameFromUsername($iter['user']);
 
@@ -194,8 +206,8 @@ if (is_numeric($pid)) {
         echo "<a target='".
                 ($GLOBALS['concurrent_layout'] ? "_parent" : "Main") .
                 "' href='$rootdir/patient_file/encounter/view_form.php?" .
-                "formname=" . $formdir . "&id=" . $iter['form_id'] .
-                "' onclick='top.restoreSession()' class='css_button_small'><span>" . xl('Edit') . "</span></a>";
+                "formname=" . htmlspecialchars($formdir, ENT_QUOTES) . "&id=" . htmlspecialchars($iter['form_id'], ENT_QUOTES) .
+                "' onclick='top.restoreSession()' class='css_button_small'><span>" . htmlspecialchars(xl('Edit'), ENT_QUOTES) . "</span></a>";
 
         if (acl_check('admin', 'super') ) {
             if ( $formdir != 'newpatient') {
@@ -203,18 +215,18 @@ if (is_numeric($pid)) {
                 echo "<a target='".
                     ($GLOBALS['concurrent_layout'] ? "_parent" : "Main") .
                     "' href='$rootdir/patient_file/encounter/delete_form.php?" .
-                    "formname=" . $formdir .
-                    "&id=" . $iter['id'] .
-                    "&encounter=". $encounter.
-                    "&pid=".$pid.
-                    "' class='css_button_small' title='" . xl('Delete this form') . "' onclick='top.restoreSession()'><span>" . xl('Delete') . "</span></a>";
+                    "formname=" . htmlspecialchars($formdir, ENT_QUOTES) .
+                    "&id=" . htmlspecialchars($iter['id'], ENT_QUOTES) .
+                    "&encounter=". htmlspecialchars($encounter, ENT_QUOTES).
+                    "&pid=".htmlspecialchars($pid, ENT_QUOTES).
+                    "' class='css_button_small' title='" . htmlspecialchars(xl('Delete this form'), ENT_QUOTES) . "' onclick='top.restoreSession()'><span>" . htmlspecialchars(xl('Delete'), ENT_QUOTES) . "</span></a>";
             } else {
-                ?><a href='javascript:;' class='css_button_small' style='color:gray'><span><?php xl('Delete','e'); ?></span></a><?php
+                ?><a href='javascript:;' class='css_button_small' style='color:gray'><span><?php echo htmlspecialchars(xl('Delete'), ENT_QUOTES); ?></span></a><?php
             }
         }
 
         echo "<div class='form_header'>";
-        echo "<a href='#' onclick='divtoggle(\"spanid_$divnos\",\"divid_$divnos\");' class='small' id='aid_$divnos'><b>$form_name</b> <span class='text'>by " . htmlspecialchars( $user['fname'] . "  " . $user['lname'] ) . "</span> (<span id=spanid_$divnos class=\"indicator\">" . xl('Collapse') . "</span>)</a></div>";
+        echo "<a href='#' onclick='divtoggle(\"spanid_$divnos\",\"divid_$divnos\");' class='small' id='aid_$divnos'><b>".htmlspecialchars($form_name, ENT_QUOTES)."</b> <span class='text'>by " . htmlspecialchars( $user['fname'] . "  " . $user['lname'] ) . "</span> (<span id=spanid_$divnos class=\"indicator\">" . htmlspecialchars(xl('Collapse'), ENT_QUOTES) . "</span>)</a></div>";
         echo "</td>\n";
         echo "</tr>";
         echo "<tr>";

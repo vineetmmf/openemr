@@ -64,4 +64,12 @@ function add_escape_custom($s) {
 function formTrim($s) {
   return formDataCore($s,true);
 }
+
+// This function escape characters in message
+// string which is likely to contain
+// 's as are common in English.
+function formAddSlashes($s) {
+  $s = str_replace("'","\'",$s);
+  return $s;
+}
 ?>

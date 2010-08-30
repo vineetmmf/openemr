@@ -433,6 +433,13 @@ $GLOBALS_METADATA = array(
       '1',                              // default = true
       xl('Discounts at checkout time are entered as money amounts, as opposed to percentage.')
     ),
+    
+    'clinical_decision_rules_and_patient_reminders' => array(
+      xl('Clinical Decision Rules and Patient Reminders'),
+      'bool',                           // data type
+      '1',                              // default = true
+      xl('Display clinical decision rules and patient reminders.')
+    ),
 
     'gbl_mask_patient_id' => array(
       xl('Mask for Patient IDs'),
@@ -683,6 +690,34 @@ $GLOBALS_METADATA = array(
       'text',                           // data type
       '',                               // default
       xl('API key for SMS Gateway.')
+    ),
+    
+    'phone_notification_hour' => array(
+      xl('Phone Notification Hour'),
+      'num',                            // data type
+      '50',                             // default
+      xl('Number of hours in advance to send Phone notification.')
+    ),
+    
+    'phone_gateway_username' => array(
+      xl('Phone Gateway Username'),
+      'text',                           // data type
+      '',                               // default
+      xl('Username for Phone Gateway. Automated VOIP service provided by Maviq. Please visit http://signup.maviq.com for more information.')
+    ),
+    
+    'phone_gateway_password' => array(
+      xl('Phone Gateway Password'),
+      'text',                           // data type
+      '',                               // default
+      xl('Password for Phone Gateway. Automated VOIP service provided by Maviq. Please visit http://signup.maviq.com for more information.')
+    ),
+    
+    'phone_gateway_url' => array(
+      xl('Phone Gateway URL'),
+      'text',                           // data type
+      '',                               // default
+      xl('URL for Phone Gateway. Automated VOIP service provided by Maviq. Please visit http://signup.maviq.com for more information.')
     ),
 
   ),
