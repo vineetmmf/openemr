@@ -142,9 +142,6 @@ INSERT INTO `form_CAMOS_subcategory` VALUES (148,NULL,NULL,NULL,NULL,NULL,NULL,'
 INSERT INTO `form_CAMOS_subcategory` VALUES (152,NULL,NULL,NULL,NULL,NULL,NULL,'birth control',1);
 INSERT INTO `form_CAMOS_subcategory` VALUES (158,NULL,NULL,NULL,NULL,NULL,NULL,'urology',7);
 INSERT INTO `form_CAMOS_subcategory` VALUES (160,NULL,NULL,NULL,NULL,NULL,NULL,'otc',1);
-INSERT INTO `form_CAMOS_subcategory` VALUES (175,NULL,NULL,'drleeds',NULL,NULL,NULL,'codes',3);
-
-
 INSERT INTO `form_CAMOS_item` VALUES (12,NULL,NULL,NULL,NULL,NULL,NULL,'azithromycin 500mg 3 day','Azithromycin 500mg Three Day Pack\r\n\r\n#3/three tablets.  \r\n\r\nTake one tablet once daily for three days.',6);
 INSERT INTO `form_CAMOS_item` VALUES (3,NULL,NULL,NULL,NULL,NULL,NULL,'chest pa and lat','chest x-ray\r\n\r\nPA and Lateral\r\n\r\nDx: bronchitis',2);
 INSERT INTO `form_CAMOS_item` VALUES (4,NULL,NULL,NULL,NULL,NULL,NULL,'zmax','Zmax \r\n(azithromycin extended release) \r\noral suspension\r\n\r\ndrink liquid as single dose.  review patient instructions provided with product.',6);
@@ -254,7 +251,6 @@ INSERT INTO `form_CAMOS_item` VALUES (210,NULL,NULL,NULL,NULL,NULL,NULL,'Flexeri
 INSERT INTO `form_CAMOS_item` VALUES (213,NULL,NULL,NULL,NULL,NULL,NULL,'anxiety','Subjective:\r\n\r\nComplains of ongoing anxiety.  Denies suicidal ideations.\r\n\r\nObjective:\r\n\r\nvital  signs: stable.\r\nheart: rrr\r\nlungs: cta\r\n\r\nAssessment:\r\n\r\nanxiety\r\n\r\nPlan:\r\n\r\nSee orders.',73);
 INSERT INTO `form_CAMOS_item` VALUES (682,NULL,NULL,NULL,NULL,NULL,NULL,'hgh','',82);
 INSERT INTO `form_CAMOS_item` VALUES (216,NULL,NULL,NULL,NULL,NULL,NULL,'valtrex','Valtrex 500mg\r\n\r\n#6/six tablets\r\n\r\nOne tablet by mouth twice daily for three days.\r\n\r\n/*for the treatment of recurrent genital herpes*/',76);
-INSERT INTO `form_CAMOS_item` VALUES (699,NULL,NULL,'drleeds',NULL,NULL,NULL,'diabetic yearly','/*billing::CPT4::microalbu::microalbumin urine::::0::120.00*/\r\n/*billing::CPT4::86687::hiv::::0::50.00*/\r\n/*billing::CPT4::RPR::RPR::::0::50.00*/\r\n/*billing::CPT4::hep c::hepatitis c::::0::80.00*/\r\n/*billing::CPT4::00000::urinalysis dip stick::::0::25.00*/\r\n/*billing::OTHER::HA1C::HA1C::::0::45.00*/\r\n/*billing::CPT4::80061::lipid pro::::0::45.00*/\r\n/*billing::CPT4::85024::CBC::::0::25.00*/\r\n/*billing::CPT4::80054::CMP::::0::50.00*/',175);
 INSERT INTO `form_CAMOS_item` VALUES (692,NULL,NULL,NULL,NULL,NULL,NULL,'safety','The patient was counseled on safety regarding opioid and anxiolytic controlled medications.  Specifically, never give any prescribed medication to another person for any reason.  Take prescribed medication only as directed and only for the reason for which it has been prescribed.  For medication that has been prescribed to be taken as needed for symptomatic relief, take the least amount possible as directed to obtain adequate relief without significant side effects.  Report leftover medication to the physician at the next visit so adjustments can be made.  Keep medication in a safe place, out of the reach of other people, especially children.  A locked box or safe is ideal.  Always report possible side effects, particularly with controlled medication, the possibility of developing psychological dependence.',170);
 INSERT INTO `form_CAMOS_item` VALUES (676,NULL,NULL,NULL,NULL,NULL,NULL,'isordil','Isordil 10mg\r\n\r\n#90/ninety\r\n\r\none tablet tid, one half hour before meals.',100);
 INSERT INTO `form_CAMOS_item` VALUES (678,NULL,NULL,NULL,NULL,NULL,NULL,'other','',3);
@@ -472,7 +468,6 @@ INSERT INTO `form_CAMOS_item` VALUES (583,NULL,NULL,NULL,NULL,NULL,NULL,'Yaz','Y
 INSERT INTO `form_CAMOS_item` VALUES (584,NULL,NULL,NULL,NULL,NULL,NULL,'wellbutrin','Wellbutrin 75mg\r\n\r\n#60/sixty.  \r\n\r\nOne tablet twice daily.\r\n\r\ntwo additional refills.',22);
 INSERT INTO `form_CAMOS_item` VALUES (587,NULL,NULL,NULL,NULL,NULL,NULL,'tens','tens\r\n\r\ndx: low back and neck pain.',26);
 INSERT INTO `form_CAMOS_item` VALUES (589,NULL,NULL,NULL,NULL,NULL,NULL,'lyrica','lyrica 75mg\r\n\r\n#120/one-hundred-twenty\r\n\r\ntwo tablets by mouth twice daily.\r\n\r\nTwo additional refills.',88);
-INSERT INTO `form_CAMOS_item` VALUES (694,NULL,NULL,'drleeds',NULL,NULL,NULL,'januvia','Januvia 100mg\r\n\r\n#30/thirty\r\n\r\nTake one tablet by mouth once a day\r\n\r\nTwo additional refills',30);
 INSERT INTO `form_CAMOS_item` VALUES (601,NULL,NULL,NULL,NULL,NULL,NULL,'tegretol','tegretol 200mg\r\n\r\n#60/sixty\r\n\r\none tablet twice daily.',88);
 INSERT INTO `form_CAMOS_item` VALUES (607,NULL,NULL,NULL,NULL,NULL,NULL,'finasteride','oxybutynin chloride 5mg\r\n\r\n#180/one hundred eighty\r\n\r\n1/2 tablet every six hours',108);
 INSERT INTO `form_CAMOS_item` VALUES (611,NULL,NULL,NULL,NULL,NULL,NULL,'terazol cream','',137);

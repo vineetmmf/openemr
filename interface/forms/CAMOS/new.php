@@ -2,28 +2,44 @@
 include_once("../../globals.php");
 include_once("../../../library/api.inc");
 include_once("../../../library/sql.inc");
-include_once("../../../library/formdata.inc.php");
+ include_once("../../..//library/acl.inc");
 $out_of_encounter = false;
 if ( (($_SESSION['encounter'] == '') || ($_SESSION['pid'] == '')) || ($_GET['mode'] == 'external')) {
   $out_of_encounter = true;
 }
 //  formHeader("Form: CAMOS");
 $returnurl = $GLOBALS['concurrent_layout'] ? 'encounter_top.php' : 'patient_encounter.php';
-function myauth() {
-  return 1;
+function myauth() { //for areas that are to be restricted for admin use, to be tied in with acl
+  if (acl_check('admin', 'forms')) {
+    return true;
+  }
+  return false;
 }
 ?>
 
 
 <?
+//SETTINGS
 $break = "/* ---------------------------------- */"; //break between clone items
 $delete_subdata = true; //true means allowing the deletion of subdata. If you delete a category, all subcategories and items go too.
 $limit = 100;
 $select_size = 20;
 $textarea_rows = 20;
-$textarea_cols = 80;
+$textarea_cols = 67;
+$textarea_rows_hide_mode = 16;
+$textarea_cols_hide_mode = 105;
 $debug = '';
 $error = '';
+//OVERRIDE SETTINGS FROM CAMOS FORM DATA - MUST BE PREPENDED WITH ..
+$settings = array();
+$query = sqlStatement("select item, content from form_CAMOS_item where item like '..%' order by item");
+while ($results = mysql_fetch_array($query, MYSQL_ASSOC)) {
+	$settings[substr($results['item'],2)] = $results['content'];
+}
+if (isset($settings['textarea_rows'])) {$textarea_rows = $settings['textarea_rows'];}
+if (isset($settings['textarea_cols'])) {$textarea_cols = $settings['textarea_cols'];}
+if (isset($settings['textarea_rows_hide_mode'])) {$textarea_rows_hide_mode = $settings['textarea_rows_hide_mode'];}
+if (isset($settings['textarea_cols_hide_mode'])) {$textarea_cols_hide_mode = $settings['textarea_cols_hide_mode'];}
 
 $preselect_category = '';
 $preselect_subcategory = '';
@@ -48,7 +64,8 @@ if (substr($_POST['hidden_mode'],0,3) == 'add') {
   if ($_POST['hidden_selection'] == 'change_category') {
     $preselect_category_override = $_POST['change_category'];
 
-    $category = formDataCore($category);
+    if (get_magic_quotes_gpc()) {$category = stripslashes($category);}
+    $category = mysql_real_escape_string($category);
 
     $query = "INSERT INTO form_CAMOS_category (user, category) values ('".$_SESSION['authUser']."', '";
     $query .= $category."')"; 
@@ -59,7 +76,8 @@ if (substr($_POST['hidden_mode'],0,3) == 'add') {
     $category_id = $_POST['hidden_category']; 
     if ($category_id >= 0 ) {
 
-      $subcategory = formDataCore($subcategory);
+      if (get_magic_quotes_gpc()) {$subcategory = stripslashes($subcategory);}
+      $subcategory = mysql_real_escape_string($subcategory);
 
       $query = "INSERT INTO form_CAMOS_subcategory (user, subcategory, category_id) values ('".$_SESSION['authUser']."', '";
       $query .= $subcategory."', '".$category_id."')";
@@ -72,7 +90,8 @@ if (substr($_POST['hidden_mode'],0,3) == 'add') {
     $subcategory_id = $_POST['hidden_subcategory']; 
     if (($category_id >= 0 ) && ($subcategory_id >=0)) {
 
-      $item = formDataCore($item);
+      if (get_magic_quotes_gpc()) {$item = stripslashes($item);}
+      $item = mysql_real_escape_string($item);
 
       $query = "INSERT INTO form_CAMOS_item (user, item, content, subcategory_id) values ('".$_SESSION['authUser']."', '";
       $query .= $item."', '".$content."', '".$subcategory_id."')";
@@ -90,9 +109,8 @@ if (substr($_POST['hidden_mode'],0,3) == 'add') {
         }
       }
 
-//    Not stripping slashes, unclear why, but will keep same functionality
-//     below just adds the escapes.
-      $content = add_escape_custom($content);
+//      if (get_magic_quotes_gpc()) {$content = stripslashes($content);}
+      $content = mysql_real_escape_string($content);
 
       $query = "UPDATE form_CAMOS_item set content = '".$content."' where id = ".$item_id;
       sqlInsert($query);
@@ -228,12 +246,17 @@ elseif ($_POST['hidden_mode'] == 'alter') {
 
 <html><head>
 <link rel=stylesheet href="<?echo $css_header;?>" type="text/css">
+<link rel="stylesheet" type="text/css" href="<?php echo $GLOBALS['webroot'] ?>/interface/forms/CAMOS/new.css?<?php echo time() ?>" />
 
 <script language="javascript" type="text/javascript"> 
+Date.prototype.addDays = function(days) {
+  this.setDate(this.getDate()+days);
+}
 
 var array1 = new Array();
 var array2 = new Array();
 var array3 = new Array();
+var replace_insert = new Array(); //this is going to be the associative array of replace terms to do real time substitution.
 var buffer = new Array();
 var icd9_list = '';
 var preselect_off = false;
@@ -265,6 +288,26 @@ function showit() {
   var log = document.getElementById('log');
   var content = document.testform.testarea;
   specialSelect(content,'/*','*/');
+}
+
+function checkReplaceInsert(mykey) {
+  var f2 = document.CAMOS;
+  var match = /(\d+)dnf/i.exec(f2.textarea_content.value);
+  if (match != null) {
+      var replace = '';
+      d = new Date();
+      days = parseInt(match[1]);
+      d.addDays(days); 
+      replace = 'Do not fill this prescription until ' + d.toDateString() + '.';
+      f2.textarea_content.value = f2.textarea_content.value.replace(match[0],replace);
+  }
+  for (var i in replace_insert) {
+    hold = f2.textarea_content.value.replace(i,replace_insert[i]);
+    compare = f2.textarea_content.value;
+    if (hold != compare) {
+      f2.textarea_content.value = f2.textarea_content.value.replace(i,replace_insert[i]);
+    }
+  }
 }
 
 function specialSelect(t_area, delim_1, delim_2) {
@@ -331,8 +374,8 @@ function resize_content() {
   f2 = document.CAMOS;
   f4 = f2.textarea_content
   if (f4.cols == <?php echo $textarea_cols ?>) {
-    f4.cols = <?php echo $textarea_cols ?>*2;
-    f4.rows = <?php echo $textarea_rows?>;
+    f4.cols = <?php echo $textarea_cols_hide_mode ?>;
+    f4.rows = <?php echo $textarea_rows_hide_mode ?>; 
   } else {
     f4.cols = <?php echo $textarea_cols ?>;
     f4.rows = <?php echo $textarea_rows?>;
@@ -439,6 +482,12 @@ $statement = sqlStatement($query);
 while ($result = sqlFetchArray($statement)) {
   echo "array3[".$i."] = new Array(\"".fixquotes($result['item'])."\", \"".fixquotes(str_replace($quote_search_content,$quote_replace_content,strip_tags($result['content'],"<b>,<i>")))."\", \"".$result['subcategory_id'].
     "\",\"".$result['id']."\");\n";
+  $item = $result['item'];
+  $content = $result['content'];
+  if (substr($item,0,1) == ".") {
+    $item = substr($item,1);
+    echo "replace_insert['$item'] = \"".fixquotes($content)."\";\n";
+  }
   $i++;
 }
 ?>
@@ -552,12 +601,30 @@ if (1) { //we are hiding the clone buttons and still need 'search others' so thi
 			$clone_data_array = array();
 		}
 		elseif ((preg_match('/^(billing)(.*)/',$clone_search,$matches)) || 
-			(preg_match('/^(codes)(.*)/',$clone_search,$matches))) { 
+			(preg_match('/^(codes)(.*)/',$clone_search,$matches)) || 
+			(preg_match('/^(short.billing)(.*)/',$clone_search,$matches)) || 
+			(preg_match('/^(short.codes)(.*)/',$clone_search,$matches))) { 
+			$short_mode = false;
 			$table = $matches[1];
+			if (substr($table,0,5) == 'short') {
+				$short_mode = true;
+				$table = substr($table,6);
+			}
 			$line = $matches[2];
 			$line = '%'.trim($line).'%';
 			$search_term = preg_replace('/\s+/','%',$line);
-			$query = "select code, code_type,code_text,modifier,units,fee from $table where code_text like '$search_term' limit $limit";
+			$query = '';
+			if ($table == 'codes') {
+	        		$query = "SELECT * FROM codes WHERE ".
+					"code_text like '$search_term' limit $limit";
+//	        		$query = "SELECT t1.code_type, t1.code, t1.code_text, t1.modifier, ".
+//					"t1.units, t2.pr_price as fee FROM codes as t1 join prices as t2 ".
+//					"on (t1.id = t2.pr_id and t2.pr_selector like '' and pr_level like 'standard') WHERE ".
+//					"t1.code_text like '$search_term' limit $limit";
+			} else {// table is billing
+	        		$query = "SELECT * FROM billing WHERE ".
+					"code_text like '$search_term' limit $limit";
+			}
 			$statement = sqlStatement($query);
 		        while ($result = sqlFetchArray($statement)) {
 				$code_type = $result['code_type'];
@@ -569,7 +636,17 @@ if (1) { //we are hiding the clone buttons and still need 'search others' so thi
 				$modifier = $result['modifier'];
 				$units = $result['units'];
 				$fee = $result['fee'];
+				if (!$fee and $table == 'codes') {
+					$statement2 = sqlStatement("Select pr_price from prices where pr_selector " .
+						"like '' and pr_level like 'standard' and pr_id = ".$result['id']);
+		        		if ($result2 = sqlFetchArray($statement2)) {
+						$fee = $result2['pr_price'];
+					}
+				}
 				$tmp = "/*billing::$code_type::$code::$code_text::$modifier::$units::$fee*/";
+				if ($short_mode) {
+					$tmp = "/*billing::$code_type::$code*/";
+				}
         		        $clone_data_array[$tmp] = $tmp;  
 			}
 		} else {
@@ -669,7 +746,7 @@ if (1) { //we are hiding the clone buttons and still need 'search others' so thi
           	$clone_vitals .= "/* vitals\n :: $weight\n :: $height\n :: $bps\n :: $bpd\n :: $pulse\n :: $temperature\n */"; 
           	$clone_data_array[$clone_vitals] = $clone_vitals;
 	}
-        $query = "SELECT code_type, code, code_text, modifier, units, fee, justify FROM billing WHERE encounter = '$last_encounter_id' and pid=".$_SESSION['pid']." and activity=1 order by id"; 
+        $query = "SELECT code_type, code, code_text, modifier, units, fee FROM billing WHERE encounter = '$last_encounter_id' and pid=".$_SESSION['pid']." and activity=1 order by id"; 
         $statement = sqlStatement($query);
         while ($result = sqlFetchArray($statement)) {
           $clone_code_type = $result['code_type'];
@@ -678,19 +755,7 @@ if (1) { //we are hiding the clone buttons and still need 'search others' so thi
           $clone_modifier = $result['modifier'];
           $clone_units = $result['units'];
           $clone_fee = $result['fee'];
-	  
-	  //added ability to grab justifications also - bm
-	  $clone_justify = "";
-	  $clone_justify_raw = $result['justify'];
-	  $clone_justify_array = explode(":",$clone_justify_raw);
-	  foreach ($clone_justify_array as $temp_justify) {
-	    trim($temp_justify);
-	    if ($temp_justify != "") {
-	      $clone_justify .= ":: ".$temp_justify." ";
-	    }
-	  }
-	      
-          $clone_billing_data = "/* billing :: $clone_code_type :: $clone_code :: $clone_code_text :: $clone_modifier :: $clone_units :: $clone_fee $clone_justify*/"; 
+          $clone_billing_data = "/* billing :: $clone_code_type :: $clone_code :: $clone_code_text :: $clone_modifier :: $clone_units :: $clone_fee */"; 
           $clone_data_array[$clone_billing_data] = $clone_billing_data;
         }
       }
@@ -858,14 +923,21 @@ function getxmlhttp (){
 }
 
 //Function to process an XMLHttpRequest.
-function processajax (serverPage, obj, getOrPost, str){
+function processajax (serverPage, obj, getOrPost, str,target){
+  //target=0, value
+  //target=1, innerHTML 
   //Get an XMLHttpRequest object for use.
   xmlhttp = getxmlhttp ();
   if (getOrPost == "get"){
     xmlhttp.open("GET", serverPage);
     xmlhttp.onreadystatechange = function() {
       if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-        obj.innerHTML = xmlhttp.responseText;
+        if (target == 0) {
+          obj.value = xmlhttp.responseText;
+        }
+        if (target == 1) {
+          obj.innerHTML = xmlhttp.responseText;
+        }
       }
     }
     xmlhttp.send(null);
@@ -874,7 +946,12 @@ function processajax (serverPage, obj, getOrPost, str){
     xmlhttp.setRequestHeader("Content-Type","application/x-www-form-urlencoded; charset=UTF-8");
     xmlhttp.onreadystatechange = function() {
       if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-        obj.innerHTML = xmlhttp.responseText;
+        if (target == 0) {
+          obj.value = xmlhttp.responseText;
+        }
+        if (target == 1) {
+          obj.innerHTML = xmlhttp.responseText;
+        }
       } 
     }
     xmlhttp.send(str);
@@ -887,7 +964,7 @@ function setformvalues(form_array){
   //Run through a list of all objects
   var str = '';
   for(key in form_array) {
-    str += key + "=" + encodeURIComponent(form_array[key]) + "&";
+    str += key + "=" + escape(form_array[key]) + "&";
   }
   //Then return the string values.
   return str;
@@ -899,7 +976,7 @@ function js_button(mode,selection) {
   var f2 = document.CAMOS;
 //check lock next 
 if ( (mode == 'add') && (selection == 'change_content') && (isLocked()) ) {
-  alert("<?php xl("You have attempted to alter content which is locked. Remove the lock if you want to do this. To unlock, remove the line, '/*lock::*/'","e"); ?>");
+  alert("You have attempted to alter content which is locked.\nRemove the lock if you want to do this.\nTo unlock, remove the line, '/*lock::*/'");
   return;
 }
 //end check lock
@@ -908,31 +985,31 @@ if ( (mode == 'add') && (selection == 'change_content') && (isLocked()) ) {
 if ( (mode == 'add') || (mode == 'alter') ) {
   if (selection == 'change_category') {
     if (trimString(f2.change_category.value) == "") {
-      alert("<?php xl("You cannot add a blank value for a category!","e"); ?>"); 
+      alert("You cannot add a blank value for a category!"); 
       return;
     }
     if (selectContains(f2.select_category, trimString(f2.change_category.value))) {
-      alert("<?php xl("There is already a category named","e"); ?>"+" "+f2.change_category.value+".");
+      alert("There is already a category named "+f2.change_category.value+".");
       return;
     }
   }
   if (selection == 'change_subcategory') {
     if (trimString(f2.change_subcategory.value) == "") {
-      alert("<?php xl("You cannot add a blank value for a subcategory!","e"); ?>"); 
+      alert("You cannot add a blank value for a subcategory!"); 
       return;
     }
     if (selectContains(f2.select_subcategory, trimString(f2.change_subcategory.value))) {
-      alert("<?php xl("There is already a subcategory named","e"); ?>"+" "+f2.change_subcategory.value+".");
+      alert("There is already a subcategory named "+f2.change_subcategory.value+".");
       return;
     }
   }
   if (selection == 'change_item') {
     if (trimString(f2.change_item.value) == "") {
-      alert("<?php xl("You cannot add a blank value for an item!","e"); ?>"); 
+      alert("You cannot add a blank value for an item!"); 
       return;
     }
     if (selectContains(f2["select_item[]"], trimString(f2.change_item.value))) {
-      alert("<?php xl("There is already an item named","e"); ?>"+" "+f2.change_item.value+".");
+      alert("There is already an item named "+f2.change_item.value+".");
       return;
     }
   }
@@ -940,7 +1017,7 @@ if ( (mode == 'add') || (mode == 'alter') ) {
 //end of check for blank or duplicate submissions
 
   if (mode == 'delete') {
-    if (!confirm("<?php xl("Are you sure you want to delete this item from the database?","e"); ?>")) {
+    if (!confirm("Are you sure you want to delete this item from the database?")) {
       return;
     }
   }
@@ -998,6 +1075,20 @@ if ( (mode == 'add') || (mode == 'alter') ) {
   //end of setting values relating to selections
 
 //deal with clone buttons or add, alter, delete. 
+  if ( (mode.substr(0,5) == 'clone') ) {
+    var myobj = document.getElementById('textarea_content_id');
+//    var myobj = document.getElementById('id_info');
+    var myarray = new Array();
+    myarray['category'] = category_text;
+    myarray['subcategory'] = subcategory_text;
+    myarray['item'] = item_text;
+    myarray['hidden_mode'] = mode;
+    myarray['clone_others_search'] = f2.clone_others_search.value;
+    myarray['stepback'] = f2.stepback.value;
+    var str = setformvalues(myarray);
+    processajax ('<? print $GLOBALS['webroot'] ?>/interface/forms/CAMOS/ajax_clone.php', myobj, "post", str,0);
+    return;
+  }
   if ( (mode.substr(0,5) == 'clone') || (mode == 'add') || (mode == 'add to') ||
     (mode == 'alter') || (mode =='delete') ) {
     f2.hidden_mode.value = mode;
@@ -1022,6 +1113,7 @@ if (!$out_of_encounter) {
   }
 //ajax code
     var myobj = document.getElementById('id_info');
+//    var myobj = document.getElementById('textarea_content_id');
     myarray = new Array();
     myarray['category'] = category_text;
     myarray['subcategory'] = subcategory_text;
@@ -1032,9 +1124,7 @@ if (!$out_of_encounter) {
     }
     else {myarray['content'] = f2.textarea_content.value;}
     var str = setformvalues(myarray);
-//    alert(str);
-    processajax ('<? print $GLOBALS['webroot'] ?>/interface/forms/CAMOS/ajax_save.php', myobj, "post", str);
-//    alert("submitted!");
+    processajax ('<? print $GLOBALS['webroot'] ?>/interface/forms/CAMOS/ajax_save.php', myobj, "post", str,1);
 //ajax code
 }
 
@@ -1068,35 +1158,56 @@ function processEnter(e,message) {
 </script>
 </head>
 <body <?echo $top_bg_line;?> topmargin=0 rightmargin=0 leftmargin=2 bottommargin=0 marginwidth=2 marginheight=0 onload="init()">
+<input type=button name='hide columns' value='hide/show columns' onClick="hide_columns()">
+<input type=button name='submit form' value='submit all' onClick="js_button('submit','submit')">
+<input type=button name='submit form' value='submit selected' onClick="js_button('submit','submit_selection')">
+<?php
+if (!$out_of_encounter) { //do not do stuff that is encounter specific if not in an encounter
+  echo "<a href='".$GLOBALS['webroot'] . "/interface/patient_file/encounter/$returnurl' onclick='top.restoreSession()'><font color=green>[".xl('Leave The Form')."]</font></a>";
+  echo "<a href='" . $GLOBALS['webroot'] .
+    "/interface/forms/CAMOS/rx_print.php?sigline=embossed' target=_new onclick='top.restoreSession()'> | rx</a>\n";
+  echo " | ";
+  echo "<a href='" . $GLOBALS['webroot'] .
+    "/interface/forms/CAMOS/notegen.php?pid=".$GLOBALS['pid']."&encounter=".$GLOBALS['encounter']."' target=_new onclick='top.restoreSession()'> | Print This Encounter</a>\n";
+} //end of if not out of encounter
+?>
 <div name="form_container" onKeyPress="gotoOne(event)">
 <form method=post action="<?echo $rootdir;?>/forms/CAMOS/save.php?mode=new" name="CAMOS">
 <?php
 if (!$out_of_encounter) {
 //	echo "<h1>$out_of_encounter</h1>\n";
 ?>
-<input type=button name=clone value='<?php xl('Clone','e'); ?>' onClick="js_button('clone', 'clone')">
-<input type=button name=clone_visit value='<?php xl('Clone Past Visit','e'); ?>' onClick="js_button('clone last visit', 'clone last visit')">
+<input type=button name=clone value=clone onClick="js_button('clone', 'clone')">
+<input type=button name=clone_visit value='clone past visit' onClick="js_button('clone last visit', 'clone last visit')">
 <select name=stepback>
-  <option value=1><?php xl('Back one visit','e'); ?></option>
-  <option value=2><?php xl('Back two visits','e'); ?></option>
-  <option value=3><?php xl('Back three visits','e'); ?></option>
-  <option value=4><?php xl('Back four visits','e'); ?></option>
-  <option value=5><?php xl('Back five visits','e'); ?></option>
-  <option value=6><?php xl('Back six visits','e'); ?></option>
-  <option value=7><?php xl('Back seven visits','e'); ?></option>
-  <option value=8><?php xl('Back eight visits','e'); ?></option>
-  <option value=9><?php xl('Back nine visits','e'); ?></option>
-  <option value=10><?php xl('Back ten visits','e'); ?></option>
-  <option value=11><?php xl('Back eleven visits','e'); ?></option>
-  <option value=12><?php xl('Back twelve visits','e'); ?></option>
+  <option value=1>back one visit</option>
+  <option value=2>back two visits</option>
+  <option value=3>back three visits</option>
+  <option value=4>back four visits</option>
+  <option value=5>back five visits</option>
+  <option value=6>back six visits</option>
+  <option value=7>back seven visits</option>
+  <option value=8>back eight visits</option>
+  <option value=9>back nine visits</option>
+  <option value=10>back ten visits</option>
+  <option value=11>back eleven visits</option>
+  <option value=12>back twelve visits</option>
 </select>
 <?  
-echo "<a href='".$GLOBALS['webroot'] . "/interface/patient_file/encounter/$returnurl' onclick='top.restoreSession()'>[".xl('Leave The Form')."]</a>";
+if(get_magic_quotes_gpc()) {
+  echo "<font color=red>+</font>\n";
+} else {
+  echo "<font color=green>-</font>\n";
+}
+//echo "<a href='".$GLOBALS['webroot'] . "/interface/patient_file/encounter/$returnurl' onclick='top.restoreSession()'>[".xl('Leave The Form')."]</a>";
 ?>
-<input type=button name='hide columns' value='<?php xl('Hide/Show Columns','e'); ?>' onClick="hide_columns()">
-<input type=button name='submit form' value='<?php xl('Submit Selected Content','e'); ?>' onClick="js_button('submit','submit_selection')">
+<!--
+<input type=button name='submit form' value='submit selected content' onClick="js_button('submit','submit_selection')">
+-->
 <?php
-} //end of if !$out_of_encounter
+} else {//end of if !$out_of_encounter
+  echo "<input type=hidden name=stepback value=1>\n";
+}
 ?>
 <div id=id_info style="display:inline">
 <!-- supposedly where ajax induced php pages can print their output to... -->
@@ -1134,12 +1245,12 @@ if ($error != '') {
   <div id=id_category_column style="display:inline">
     <select name=select_category size=<? echo $select_size ?> onchange="click_category()"></select><br>
 <?
-if (myAuth() == 1) {//root user only can see administration option 
+if (myauth()) {//root user only can see administration option 
 ?>
     <input type=text name=change_category><br>
-    <input type=button name=add1 value='<?php xl('add','e'); ?>' onClick="js_button('add','change_category')">
-    <input type=button name=alter1 value='<?php xl('alter','e'); ?>' onClick="js_button('alter','change_category')">
-    <input type=button name=del1 value='<?php xl('del','e'); ?>' onClick="js_button('delete','change_category')"><br>
+    <input type=button name=add1 value=add onClick="js_button('add','change_category')">
+    <input type=button name=alter1 value=alter onClick="js_button('alter','change_category')">
+    <input type=button name=del1 value=del onClick="js_button('delete','change_category')"><br>
 <?
 }
 ?>
@@ -1149,12 +1260,12 @@ if (myAuth() == 1) {//root user only can see administration option
   <div id=id_subcategory_column style="display:inline">
     <select name=select_subcategory size=<? echo $select_size ?> onchange="click_subcategory()"></select><br>
 <?
-if (myAuth() == 1) {//root user only can see administration option 
+if (myauth()) {//root user only can see administration option 
 ?>
     <input type=text name=change_subcategory><br>
-    <input type=button name=add2 value='<?php xl('add','e'); ?>' onClick="js_button('add','change_subcategory')">
-    <input type=button name=alter1 value='<?php xl('alter','e'); ?>' onClick="js_button('alter','change_subcategory')">
-    <input type=button name=del2 value='<?php xl('del','e'); ?>' onClick="js_button('delete','change_subcategory')"><br>
+    <input type=button name=add2 value=add onClick="js_button('add','change_subcategory')">
+    <input type=button name=alter1 value=alter onClick="js_button('alter','change_subcategory')">
+    <input type=button name=del2 value=del onClick="js_button('delete','change_subcategory')"><br>
 <?
 }
 ?>
@@ -1164,12 +1275,12 @@ if (myAuth() == 1) {//root user only can see administration option
   <div id=id_item_column style="display:inline">
     <select name=select_item[] size=<? echo $select_size ?> onchange="click_item()" multiple="multiple"></select><br>
 <?
-if (myAuth() == 1) {//root user only can see administration option 
+if (myauth()) {//root user only can see administration option 
 ?>
     <input type=text name=change_item><br>
-    <input type=button name=add3 value='<?php xl('add','e'); ?>' onClick="js_button('add','change_item')">
-    <input type=button name=alter1 value='<?php xl('alter','e'); ?>' onClick="js_button('alter','change_item')">
-    <input type=button name=del3 value='<?php xl('del','e'); ?>' onClick="js_button('delete','change_item')"><br>
+    <input type=button name=add3 value=add onClick="js_button('add','change_item')">
+    <input type=button name=alter1 value=alter onClick="js_button('alter','change_item')">
+    <input type=button name=del3 value=del onClick="js_button('delete','change_item')"><br>
 <?
 }
 ?>
@@ -1177,33 +1288,72 @@ if (myAuth() == 1) {//root user only can see administration option
   </td>
   <td>
 <div id=id_textarea_content style="display:inline">
-    <textarea name=textarea_content cols=<? echo $textarea_cols ?> rows=<? echo $textarea_rows ?> onFocus="content_focus()" onBlur="content_blur()" onDblClick="specialSelect(this,'/*','*/')" tabindex=2></textarea>
+    <textarea name=textarea_content id=textarea_content_id cols=<? echo $textarea_cols ?> rows=<? echo $textarea_rows ?> onFocus="content_focus()" onBlur="content_blur()" onDblClick="specialSelect(this,'/*','*/')" onKeyUp="checkReplaceInsert(event.which)" tabindex=2></textarea>
     <br/>
 <input type=text size=35 name=clone_others_search value='<? echo $_POST['clone_others_search'] ?>' tabindex=1 onKeyPress="processEnter(event,'clone_others_search')"/>
-<input type=button name=clone_others_search_button value='<?php xl('Search','e'); ?>' onClick="js_button('clone others', 'clone others')"/>
-<input type=button name=clone_others_selected_search_button value='<?php xl('Search Selected','e'); ?>' onClick="js_button('clone others selected', 'clone others selected')"/>
+<input type=button name=clone_others_search_button value=search onClick="js_button('clone others', 'clone others')"/>
+<input type=button name=clone_others_selected_search_button value='search selected' onClick="js_button('clone others selected', 'clone others selected')"/>
 <?
-if (myAuth() == 1) {//root user only can see administration option 
+if (myauth()) {//root user only can see administration option 
 ?>
 <div id=id_main_content_buttons style="display:block">
-    <input type=button name=add4 value='<?php xl('Add','e'); ?>' onClick="js_button('add','change_content')">
-    <input type=button name=add4 value='<?php xl('Add to','e'); ?>' onClick="js_button('add to','change_content')">
-    <input type=button name=lock value='<?php xl('Lock','e'); ?>' onClick="lock_content()">
+    <input type=button name=add4 value=add onClick="js_button('add','change_content')">
+    <input type=button name=add4 value='add to' onClick="js_button('add to','change_content')">
+    <input type=button name=lock value=lock onClick="lock_content()">
 <?
+}//end of if myauth
 if (!$out_of_encounter) { //do not do stuff that is encounter specific if not in an encounter
 ?>
-    <input type=button name=icd9 value='<?php xl('ICD9','e'); ?>' onClick="append_icd9()"> 
+    <input type=button name=icd9 value=icd9 onClick="append_icd9()"> 
+<?
+} //end of if out of encounter
+?>
 </div> <!-- end of id_main_content_buttons-->
-<?
-}
-?>
-<?
-}
-?>
   </td>
 </td>
 </tr>
 </table>
+<?
+if (!$out_of_encounter) { //do not do stuff that is encounter specific if not in an encounter
+?>
+<input type=button name='submit form' value='submit all' onClick="js_button('submit','submit')">
+<input type=button name='submit form' value='submit selected' onClick="js_button('submit','submit_selection')">
+<?
+}
+?>
+<?php
+if (!$out_of_encounter) { //do not do stuff that is encounter specific if not in an encounter
+  echo "<a href='".$GLOBALS['webroot'] . "/interface/patient_file/encounter/$returnurl' onclick='top.restoreSession()'><font color=green>[".xl('Leave The Form')."]</font></a>";
+  echo "<a href='" . $GLOBALS['webroot'] .
+    "/interface/forms/CAMOS/rx_print.php?sigline=embossed' target=_new onclick='top.restoreSession()'> | rx</a>\n";
+  echo " | ";
+  echo "<a href='" . $GLOBALS['webroot'] .
+    "/interface/forms/CAMOS/rx_print.php?sigline=signed' target=_new onclick='top.restoreSession()'> | sig_rx</a>\n";
+  echo " | ";
+  echo "<a href='" . $GLOBALS['webroot'] .
+    "/interface/forms/CAMOS/rx_print.php?letterhead=true&signer=patient' target=_new onclick='top.restoreSession()'> | letterhead; patient signs</a>\n";
+  echo " | ";
+  echo "<a href='" . $GLOBALS['webroot'] .
+    "/interface/forms/CAMOS/rx_print.php?letterhead=true&signer=doctor' target=_new onclick='top.restoreSession()'> | letterhead; doctor signs</a>\n";
+  echo " | ";
+  echo "<a href='" . $GLOBALS['webroot'] .
+    "/interface/forms/CAMOS/notegen.php?pid=".$GLOBALS['pid']."&encounter=".$GLOBALS['encounter']."' target=_new onclick='top.restoreSession()'> | Print This Encounter</a>\n";
+  echo " | ";
+  echo "<a href='" . $GLOBALS['webroot'] .
+    "/interface/forms/CAMOS/notegen.php' target=_new onclick='top.restoreSession()'> | Print Any Encounter</a>\n";
+} //end of if not out of encounter
+else { // if we are out of encounter...
+  echo "<a href='" . $GLOBALS['webroot'] .
+    "/interface/forms/CAMOS/rx_print.php?paper_form=true' target=_new onclick='top.restoreSession()'> | generate paper form</a>\n";
+  //echo " | ";
+
+}
+echo "<a href='".$GLOBALS['webroot'] . "/interface/forms/CAMOS/help.html' target='new'><font color=red> | [".xl('help')."]</font></a>";
+echo "<a href='".$GLOBALS['webroot'] . "/interface/forms/CAMOS/cheatsheet.php' target='new'><font color=red> | [".xl('cheat sheet')."]</font></a>";
+if (myauth() && $out_of_encounter) {
+  echo "<a href='".$GLOBALS['webroot'] . "/interface/forms/CAMOS/admin.php' target=_new> | import/export</a>";
+}
+?>
 
 <input type=hidden name=hidden_mode>
 <input type=hidden name=hidden_selection>
@@ -1215,25 +1365,13 @@ if (!$out_of_encounter) { //do not do stuff that is encounter specific if not in
 <input type=hidden name=subcategory>
 <input type=hidden name=item>
 <input type=hidden name=content>
-<?
-if (!$out_of_encounter) { //do not do stuff that is encounter specific if not in an encounter
-?>
-<input type=button name='submit form' value='<?php xl('Submit All Content','e'); ?>' onClick="js_button('submit','submit')">
-<input type=button name='submit form' value='<?php xl('Submit Selected Content','e'); ?>' onClick="js_button('submit','submit_selection')">
-<?
-}
-?>
-<?
-if (!$out_of_encounter) { //do not do stuff that is encounter specific if not in an encounter
-  echo "<a href='".$GLOBALS['webroot'] . "/interface/patient_file/encounter/$returnurl' onclick='top.restoreSession()'>[".xl('Leave The Form')."]</a>";
-  echo "<a href='".$GLOBALS['webroot'] . "/interface/forms/CAMOS/help.html' target='new'> | [".xl('Help')."]</a>";
-//  echo $previous_encounter_data; //probably don't need anymore now that we have clone last visit
-}
-?>
 </div>
 </form>
 </div>
 <?php
+
+
+
 formFooter();
 
 //PHP FUNCTIONS

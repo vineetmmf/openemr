@@ -71,7 +71,7 @@ damage that occurs as a result of the data or as a result of the use of the CAMO
 <b>icd9</b> button - Inserts icd9 codes from billing table for this encounter.  You have to remember to enter them first before viewing this form.
 </p>
 <p>
-<b>search</b> button - Searches content from form_CAMOS table based on keywords entered in text box to the left of the button.  Starting the keywords with the word 'codes' or 'billing' will search the codes or billing table for matching icd9, cpt4 or other codes.  Data is displayed in the content box in camos function format (see advanced section below).
+<b>search</b> button - Searches content from form_CAMOS table based on keywords entered in text box to the left of the button.  Starting the keywords with the word 'codes' or 'billing' will search the codes or billing table for matching icd9, cpt4 or other codes.  Data is displayed in the content box in camos function format (see advanced section below).  Instead of 'codes' or 'billing', you may use 'short codes' or 'short billing' to have the results returned in short format (see Advanced, billing function below)
 </p>
 <p>
 <b>search selected</b> button -  Like the search button described above, but searches are limited by what is selected in the columns.
@@ -155,6 +155,23 @@ If you want to enter an entry into the billing table to have, for example, a CPT
 <div class='code'>
 <pre>
 /*billing::code_type::code::code_text::modifier::units::fee::justify1::justify2*/
+</pre>
+</div>
+</div>
+<b>short billing function signature</b>
+<div class='box'>
+<div class='code'>
+<pre>
+/*billing::code_type::code*/
+</pre>
+</div>
+</div>
+<b>short billing function signature with justification</b>
+<div class='box'>
+<div class='code'>
+<pre>
+/*billing::code_type::code::justify::justify1::justify2*/
+**note: the 3rd argument, justify, is the word 'justify'.
 </pre>
 </div>
 </div>

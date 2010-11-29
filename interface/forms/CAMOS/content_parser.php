@@ -1,11 +1,15 @@
 <?
 include_once("../../globals.php");
 include_once("../../../library/sql.inc");	
-include_once("../../../library/formdata.inc.php");
+include_once("../../../library/classes/NumberToText.class.php");	
 
 function addAppt($days,$time) {
-  $days = formDataCore($days);
-  $time = formDataCore($time);
+  if(get_magic_quotes_gpc()) {$
+    $days = stripslashes($days);
+    $time = stripslashes($time);
+  }
+  $days = mysql_real_escape_string($days);
+  $time = mysql_real_escape_string($time);
 
   $sql = "insert into openemr_postcalendar_events (pc_pid, pc_eventDate," . 
     "pc_comments, pc_aid,pc_startTime) values (" . 
@@ -29,33 +33,62 @@ function addVitals($weight, $height, $systolic, $diastolic, $pulse, $temp) {
   echo $c->default_action_process($_POST);
 }
 
+function preBilling($code_type, $code) { //return an array of the stuff needed by addBilling2
+	$ct_id = 1;
+	if (strtolower($code_type) == strtolower('ICD9')) {
+		$ct_id = 2;
+	}
+	elseif (strtolower($code_type) == strtolower('OTHER')) {
+		$ct_id = 3;
+	}
+	$ret = array();
+        $query = "SELECT * FROM codes WHERE code_type like '$ct_id' and " .
+		"code like '$code'";
+        $statement = sqlStatement($query);
+        if ($result = sqlFetchArray($statement)) {
+		$ret['code_type'] = $result['code_type'];
+		$ret['code'] = $result['code'];
+		$ret['code_text'] = $result['code_text'];
+		$ret['modifier'] = $result['modifier'];
+		$ret['units'] = $result['units'];
+		$ret['fee'] = $result['fee'];
+		if (!$ret['fee']) {
+			$statement2 = sqlStatement("Select pr_price from prices where pr_selector " .
+			"like '' and pr_level like 'standard' and pr_id = ".$result['id']);
+			if ($result2 = sqlFetchArray($statement2)) {
+				$ret['fee'] = $result2['pr_price'];
+			}
+		}
+	}
+	return $ret;
+}
 //This function was copied from billing.inc and altered to support 'justify'
 function addBilling2($encounter, $code_type, $code, $code_text, $modifier="",$units="",$fee="0.00",$justify)
 {
   $justify_string = '';
   if ($justify)
   {
-    //trim eahc entry
-    foreach ($justify as $temp_justify) {
-      $justify_trimmed[] = trim($temp_justify);	
-    }
-    //format it
-    $justify_string = implode(":",$justify_trimmed).":";
+    $justify_string = implode(":",$justify).":";
   }
-  $code_type = formDataCore($code_type);
-  $code = formDataCore($code);
-  $code_text = formDataCore($code_text);
-  $modifier = formDataCore($modifier);
-  $units = formDataCore($units);
-  $fee = formDataCore($fee);
-  $justify_string = formDataCore($justify_string);
-    
-  // set to authorize billing codes as default - bm
-  //  could place logic here via acls to control who
-  //  can authorize as a feature in the future
-  $authorized=1;
+  if(get_magic_quotes_gpc()) {$
+    $code_type = stripslashes($code_type);
+    $code = stripslashes($code);
+    $code_text = stripslashes($code_text);
+    $modifier = stripslashes($modifier);
+    $units = stripslashes($units);
+    $fee = stripslashes($fee);
+    $justify_string = stripslashes($justify_string);
+  }
+  $code_type = mysql_real_escape_string($code_type);
+  $code = mysql_real_escape_string($code);
+  $code_text = mysql_real_escape_string($code_text);
+  $modifier = mysql_real_escape_string($modifier);
+  $units = mysql_real_escape_string($units);
+  $fee = mysql_real_escape_string($fee);
+  $justify_string = mysql_real_escape_string($justify_string);
+  $pid = $_SESSION['pid'];
 
-  $sql = "insert into billing (date, encounter, code_type, code, code_text, pid, authorized, user, groupname,activity,billed,provider_id,modifier,units,fee,justify) values (NOW(), '".$_SESSION['encounter']."', '$code_type', '$code', '$code_text', '".$_SESSION['pid']."', '$authorized', '" . $_SESSION['authId'] . "', '" . $_SESSION['authProvider'] . "',1,0,".$_SESSION['authUserID'].",'$modifier','$units','$fee','$justify_string')";
+  $sql = "insert into billing (date, encounter, code_type, code, code_text, pid, authorized, user, groupname,activity,billed,provider_id,modifier,units,fee,justify) values (NOW(), '".$_SESSION['encounter']."', '$code_type', '$code', '$code_text', '".$pid."', '$authorized', '" . $_SESSION['authId'] . "', '" . $_SESSION['authProvider'] . "',1,0,".$_SESSION['authUserID'].",'$modifier','$units','$fee','$justify_string')";
 	
   return sqlInsert($sql);
 	
@@ -86,22 +119,59 @@ function remove_comments($string_to_process) {
 //process commands embedded in C style comments where function name is first
 //followed by args separated by :: delimiter and nothing else
 
+function pre_view_process ($encounter,$pid,$string_to_process) {
+  if (preg_match("/\|\s*date_add\s*\(\s*(.*?)\s*\)\s*\|/",$string_to_process, $matches)) {
+    $to_replace = $matches[0];
+    $days = $matches[1];
+    $string_to_process = date_add($pid,$encounter,$to_replace,$days,$string_to_process,'');
+//    $query = "select date_format(date_add(date, interval $days day),'%W, %m-%d-%Y') as date from form_encounter where pid = $pid and encounter = $encounter";
+//    $statement = sqlStatement($query);
+//    if ($result = sqlFetchArray($statement)){ 
+//        $string_to_process = str_replace($to_replace,$result['date'],$string_to_process);
+//    }
+  }
+  while (preg_match("/dnf(\d+)/",$string_to_process, $matches)) {
+    $to_replace = $matches[0];
+    $days = $matches[1];
+    $message = "Do not fill this prescription until ";
+    $string_to_process = date_add($pid,$encounter,$to_replace,$days,$string_to_process,$message);
+  }
+  while (preg_match("/dt(\d+)/",$string_to_process, $matches)) {
+    $to_replace = $matches[0];
+    $days = $matches[1];
+    $message = "";
+    $string_to_process = date_add($pid,$encounter,$to_replace,$days,$string_to_process,$message);
+  }
+  return $string_to_process;
+}
 function process_commands(&$string_to_process, &$camos_return_data) {
 
   //First, handle replace function as special case.  full depth of inserts should be evaluated prior
   //to evaluating other functions in final string assembly.
   $replace_finished = FALSE; 
   while (!$replace_finished) {
-    if (preg_match_all("/\/\*\s*replace\s*::.*?\*\//",$string_to_process, $matches)) {
+    if ((preg_match_all("/\/\*\s*replace\s*::.*?\*\//",$string_to_process, $matches)) || 
+     (preg_match_all("/\.\..+\.\./",$string_to_process, $matches))) {
       foreach($matches[0] as $val) {
-        $comm = preg_replace("/(\/\*)|(\*\/)/","",$val);
-        $comm_array = split('::', $comm); //array where first element is command and rest are args
-        $replacement_item = trim($comm_array[1]); //this is the item name to search for in the database.  easy.
+	$type = 0; //the /*replace::*/ form
+	if (preg_match("/^\.\./",$val)) {
+		$type = 1; //the .. form
+	}
+	$replacement_item = '';
+	if ($type == 0) {
+          $comm = preg_replace("/(\/\*)|(\*\/)/","",$val);
+          $comm_array = split('::', $comm); //array where first element is command and rest are args
+          $replacement_item = trim($comm_array[1]); //this is the item name to search for in the database.  easy.
+	}
+	if ($type == 1) {
+          $replacement_item = trim(preg_replace("/\.\./","",$val));
+	}
         $replacement_text = '';
         $query = "SELECT content FROM form_CAMOS_item WHERE item like '".$replacement_item."'";
         $statement = sqlStatement($query);
         if ($result = sqlFetchArray($statement)) {$replacement_text = $result['content'];}
-        $replacement_text = formDataCore($replacement_text);
+        if(get_magic_quotes_gpc()) {$replacement_text = stripslashes($replacement_text);}
+        $replacement_text = mysql_real_escape_string($replacement_text);
         $string_to_process = str_replace($val,$replacement_text,$string_to_process);
       }
     }
@@ -130,7 +200,9 @@ function process_commands(&$string_to_process, &$camos_return_data) {
         $string_to_process = str_replace($to_replace,$result['date'],$string_to_process);
     }
   }
-
+  //check if a number preceded by a # does not have a '/' after it.  That means we need to convert that number to text
+  //and put it in with a / before it. Saves me the trouble of typing out number words all the time :)
+  $string_to_process = number_to_words($string_to_process);
 
   //end of special case of replace function
   $return_value = 0;
@@ -149,17 +221,29 @@ function process_commands(&$string_to_process, &$camos_return_data) {
       //insert data into the billing table, see, easy!
       $type = trim(array_shift($comm_array));  
       $code = trim(array_shift($comm_array));  
-      $text = trim(array_shift($comm_array));  
-      $modifier = trim(array_shift($comm_array));  
-      $units = trim(array_shift($comm_array));
-      //make default units 1 if left blank - bm
-      if ($units == '') {
-        $units = 1;	  
-      }
-      $fee = sprintf("%01.2f",trim(array_shift($comm_array)));
-      //make default fee 0.00 if left blank
-      if ($fee == '') {
-        $fee = sprintf("%01.2f",'0.00');
+      $text = '';
+      $modifier = '';
+      $units = '';
+      $fee = '';
+      if (count($comm_array) == 0) {//short code format
+	$tmp = preBilling($type, $code);
+        $text = $tmp['code_text']; 
+        $modifier = $tmp['modifier'];
+        $units = $tmp['units'];
+        $fee = sprintf("%01.2f",$tmp['fee']);  
+      } else {
+        $text = trim(array_shift($comm_array));  
+        if (strtolower($text) == 'justify') {//short code with rest for justification
+  	  $tmp = preBilling($type, $code);
+          $text = $tmp['code_text']; 
+          $modifier = $tmp['modifier'];
+          $units = $tmp['units'];
+          $fee = sprintf("%01.2f",$tmp['fee']);  
+        } else {
+          $modifier = trim(array_shift($comm_array));  
+          $units = trim(array_shift($comm_array));  
+          $fee = sprintf("%01.2f",trim(array_shift($comm_array)));  
+        }
       }
       //in function call 'addBilling' note last param is the remainder of the array.  we will look for justifications here...
       addBilling2($encounter, $type, $code, $text, $modifier,$units,$fee,$comm_array);
@@ -200,7 +284,14 @@ function process_commands(&$string_to_process, &$camos_return_data) {
 // I was using this for debugging.  touch logging, chmod 777 logging, then can use.
   //file_put_contents('./logging',$string_to_process."\n\n*************\n\n",FILE_APPEND);//DEBUG
 
-function replace($pid, $enc, $content) { //replace placeholders with values
+function replace_placeholders($enc, $pid, $content) { //replace placeholders with values
+	$replacers_item = array();
+	$replacers_content = array();
+	$query = sqlStatement("select item, content from form_CAMOS_item where item like '.%'");
+	if ($results = mysql_fetch_array($query, MYSQL_ASSOC)) {
+		array_push($replacers_item, substr($results['item'],1));	
+		array_push($replacers_content, $results['content']);	
+	}
 	$name= '';
 	$fname = '';
 	$mname = '';
@@ -230,12 +321,13 @@ function replace($pid, $enc, $content) { //replace placeholders with values
 		$gender = $results['gender'];
 	}
 	$query1 = sqlStatement("select t1.lname from users as t1 join forms as " .
-	"t2 on (t1.username like t2.user) where t2.encounter = ".$enc);
+	"t2 on (t1.username like t2.user) where t2.encounter = ".$_SESSION['encounter']);
 	if ($results = mysql_fetch_array($query1, MYSQL_ASSOC)) {
 		$doctorname = "Dr. ".$results['lname'];
 	}
 	$ret = preg_replace(array("/patientname/i","/patientage/i","/patientgender/i","/doctorname/i"),
 	array($name,$age,strtolower($gender),$doctorname), $content);
+	$ret = str_ireplace($replacers_item, $replacers_content, $ret);
 	return $ret;
 }
 function patient_age($birthday, $date) { //calculate age from birthdate and a given later date
@@ -247,5 +339,47 @@ function patient_age($birthday, $date) { //calculate age from birthdate and a gi
     if ($month_diff < 0) $year_diff--;
     elseif (($month_diff==0) && ($day_diff < 0)) $year_diff--;
     return $year_diff;
+}
+function number_to_words($string) {
+  $string_to_process = $string;
+  if (preg_match_all("/#(\d+)([^\/\d])/",$string_to_process, $matches, PREG_SET_ORDER)) {
+	foreach ($matches as $v) {
+		$offset = strpos($v[0],$v[1])+1;
+		$to_replace = $v[1];
+		$number = $v[1];
+		$nt = new NumberToText($number);
+		$out = $nt->convert();
+		$out = str_replace(' ','-',trim($out));
+		$string_to_process = preg_replace("/#(\d+)[^\/\d]/",'#'.$number.'/'.$out.$v[2],$string_to_process,1);
+	}
+  }
+  return $string_to_process;
+}
+function date_add($pid,$encounter,$to_replace,$days,$string_to_process,$message) {
+    $query = "select date_format(date_add(date, interval $days day),'%W, %m-%d-%Y') as date from form_encounter where " . "pid = " . $pid . " and encounter = " . $encounter; 
+    $statement = sqlStatement($query);
+    if ($result = sqlFetchArray($statement)){ 
+        $string_to_process = str_replace($to_replace,$message.$result['date'],$string_to_process);
+    }
+//	debug($encounter.'|'.$to_replace.'|'.$days.'|'.$string_to_process.'|'.$message."\n");
+//	debug($string_to_process);
+//Duragesic Patch 50mcg #5/five patches.   apply 1 patch every 72 hours for pain. dnf14
+//23432|dnf14|14|Duragesic Patch 50mcg #5/five patches.   apply 1 patch every 72 hours for pain. dnf14|Do not fill this prescription until 
+
+        return $string_to_process;
+}
+function date_sub($pid,$encounter,$to_replace,$days,$string_to_process) {
+    $query = "select date_format(date_sub(date, interval $days day),'%W, %m-%d-%Y') as date from form_encounter where " . "pid = " . $pid . " and encounter = " . $encounter; 
+    $statement = sqlStatement($query);
+    if ($result = sqlFetchArray($statement)){ 
+        $string_to_process = str_replace($to_replace,$result['date'],$string_to_process);
+    }
+    return $string_to_process;
+}
+function debug($string) {
+	$fileContainer = "activity.log";
+	$filePointer = fopen($fileContainer, "a");
+	fputs($filePointer, $string."\n");
+	fclose($filePointer);
 }
 ?>

@@ -1,0 +1,112 @@
+<html><head>
+</head>
+<body> 
+<form>
+<hr>
+<h1> physical_sample </h1>
+<hr>
+<input type="submit" name="submit form" value="submit form" /><br>
+
+<table>
+
+<tr><td>Chief complaints</td> <td><textarea name="chief_complaints"  rows="4" cols="40"></textarea></td></tr>
+
+</table>
+<br>
+<h3>past surgical history</h3>
+
+<table>
+
+<tr><td>Surgical history</td> <td><label><input type="checkbox" name="surgical_history[]" value="cholecystectomy" />cholecystectomy</label> <label><input type="checkbox" name="surgical_history[]" value="tonsillectomy" />tonsillectomy</label> <label><input type="checkbox" name="surgical_history[]" value="apendectomy" />apendectomy</label> <label><input type="checkbox" name="surgical_history[]" value="hernia" />hernia</label></td></tr>
+
+</table>
+<br>
+<h4>other</h4>
+
+<table>
+
+<tr><td>Surgical history other</td> <td><input type="text" name="surgical_history_other"  /></td></tr>
+
+</table>
+<br>
+<h3>past medical history</h3>
+
+<table>
+
+<tr><td>Medical history</td> <td><select name="medical_history[]"  size="4" multiple="multiple">
+<option value="asthma">asthma</option>
+<option value="diabetes">diabetes</option>
+<option value="hypertension">hypertension</option>
+<option value="GERD">GERD</option>
+</select></td></tr>
+
+</table>
+<br>
+<h4>other</h4>
+
+<table>
+
+<tr><td>Medical history other</td> <td><input type="text" name="medical_history_other"  /></td></tr>
+
+</table>
+<br>
+<h2>Allergies</h2>
+
+<table>
+
+<tr><td>Allergies</td> <td><label><input type="checkbox" name="allergies[]" value="penicillin" />penicillin</label> <label><input type="checkbox" name="allergies[]" value="sulfa" />sulfa</label> <label><input type="checkbox" name="allergies[]" value="iodine" />iodine</label></td></tr>
+
+</table>
+<br>
+<h4>other</h4>
+
+<table>
+
+<tr><td>Allergies other</td> <td><input type="text" name="allergies_other"  /></td></tr>
+
+</table>
+<br>
+<h2>Social History</h2>
+<br>
+<h3>smoking</h3>
+
+<table>
+
+<tr><td>Smoke history</td> <td><label><input type="radio" name="smoke_history" value="non-smoker" />non-smoker</label> <label><input type="radio" name="smoke_history" value="smoker" />smoker</label></td></tr>
+
+</table>
+<br>
+<h3>alcohol</h3>
+
+<table>
+
+<tr><td>Etoh history</td> <td><select name="etoh_history"  size="4">
+<option value="none">none</option>
+<option value="occasional">occasional</option>
+<option value="daily">daily</option>
+<option value="heavy use">heavy use</option>
+</select></td></tr>
+
+</table>
+<br>
+<h3>last mammogram</h3>
+
+<table>
+
+<tr><td>
+<span class='text'><?php xl('Last mammogram (yyyy-mm-dd): ','e') ?></span>
+</td><td>
+<input type='text' size='10' name='last_mammogram' id='last_mammogram' onkeyup='datekeyup(this,mypcc)' onblur='dateblur(this,mypcc)' title='yyyy-mm-dd last date of this event' />
+<img src='../../../interface/pic/show_calendar.gif' align='absbottom' width='24' height='22'
+id='img_last_mammogram' border='0' alt='[?]' style='cursor:pointer'
+title='Click here to choose a date'>
+<script>
+Calendar.setup({inputField:'last_mammogram', ifFormat:'%Y-%m-%d', button:'img_last_mammogram'});
+</script>
+</td></tr>
+
+</table>
+<table></table><input type="submit" name="submit form" value="submit form" />
+</form>
+</body>
+</html>
