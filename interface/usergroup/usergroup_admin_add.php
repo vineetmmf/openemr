@@ -23,9 +23,255 @@ $alertmsg = '';
 <script src="checkpwd_validation.js" type="text/javascript"></script>
 
 <script language="JavaScript">
+function trimAll(sString)
+{
+	while (sString.substring(0,1) == ' ')
+	{
+		sString = sString.substring(1, sString.length);
+	}
+	while (sString.substring(sString.length-1, sString.length) == ' ')
+	{
+		sString = sString.substring(0,sString.length-1);
+	}
+	return sString;
+} 
 
+function aphanumeric(alphane) {
+          
+            var numaric = alphane;
+            for(var j=0; j<numaric.length; j++)
+            {
+                var alphaa = numaric.charAt(j);
+                var hh = alphaa.charCodeAt(0);
+               if(((hh > 47 && hh<58) || (hh > 64 && hh<91) || (hh > 96 && hh<123)) && alphane.length == 9)
+                {
+       
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            return true;
+}
+
+
+	 
 function submitform() {
-	if (document.forms[0].rumple.value.length>0 && document.forms[0].stiltskin.value.length>0) {
+		var re5digit=/^\d{5}$/ //regular expression defining a 5 digit number
+		var re10digit=/^\d{10}$/ //regular expression defining a 10 digit number
+		var renum1digit=/^([0-1])+\d{9}$/ ;
+		var emailvalidation = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
+		var restreetvalidation = /^([0-9])+\s([A-Za-z])+([\sA-Za-z])+$/;
+		
+
+	//if (document.forms[0].rumple.value.length>0 && document.forms[0].stiltskin.value.length>0) {
+			//} else {
+		
+		for(i = 0; i < document.forms[0].access_group.length; i++) { 
+			 
+	        if (document.forms[0].access_group.options[i].selected) {
+		      
+	                       if(document.forms[0].access_group.options[i].text =="Physicians")
+	                         {
+
+	               		    
+				if(document.getElementById('phy_suffix').value=='0') 
+				{
+					alert("Required field missing:Please select a suffix");
+					return false;
+				 }
+				if(trimAll(document.getElementById('phy_street').value) == ""){
+					alert("Required field missing: Please enter the Address");
+					document.getElementById('phy_street').focus();
+					return false;
+				}
+				if(document.getElementById('phy_street').value.search(restreetvalidation)==-1)
+				{
+				     alert("Invalid Input: Address should contain numbers and alphabets with space.\nFor example 304 Sterling Ave");
+				     document.getElementById('phy_street').focus();
+				     return false;
+				}
+			/*	if(trimAll(document.getElementById('phy_street2').value) == ""){
+					alert("Required field missing: Please enter the Address2");
+					document.getElementById('phy_street2').focus();
+					return false;
+				}*/				
+				if(trimAll(document.getElementById('phy_city').value) == ""){
+					alert("Required field missing: Please enter the city");
+					document.getElementById('phy_city').focus();
+					return false;
+				}
+				if(trimAll(document.getElementById('phy_zip').value) == ""){
+					alert("Required field missing: Please enter the zip");
+					document.getElementById('phy_zip').focus();
+					return false;
+				}    
+				if(document.getElementById('phy_zip').value.search(re5digit)==-1) 
+				{
+					alert("Required field missing:Please enter a valid 5 digit number inside the zip");
+					return false;
+				 }
+				if(document.getElementById('phy_state').value=='0') 
+				{
+					alert("Required field missing:Please select a state");
+					return false;
+				 }
+				if(trimAll(document.getElementById('phy_phone').value) == ""){
+					alert("Required field missing: Please enter the phone");
+					document.getElementById('phy_phone').focus();
+					return false;
+				}    
+				if(document.getElementById('phy_phone').value.search(renum1digit)!=-1) 
+				{
+					alert("Required field missing:Number inside phone should not start with number 1 or 0");    
+					document.getElementById('phy_phone').focus();
+					return false;
+				}
+				if(document.getElementById('phy_phone').value.search(re10digit)==-1) 
+				{
+					alert("Required field missing:Please enter a valid 10 digit number inside the phone ");
+							document.getElementById('phy_phone').focus();
+					return false;
+				 }
+				 
+				if(trimAll(document.getElementById('phy_fax').value) == ""){
+					alert("Required field missing: Please enter the value in fax");
+					document.getElementById('phy_fax').focus();
+					return false;
+				}    
+				
+				if(document.getElementById('phy_fax').value.search(renum1digit)!=-1) 
+				{
+					alert("Required field missing:Number inside Fax should not start with number 1 or 0");    
+						document.getElementById('phy_fax').focus();
+					return false;
+				}
+				 if(document.getElementById('phy_fax').value.search(re10digit)==-1) 
+				{
+					alert("Required field missing:Please enter a valid 10 digit number inside fax ");
+					return false;
+				 }
+				 
+					if(trimAll(document.getElementById('phy_workphone1').value) == ""){
+					alert("Required field missing: Please enter the value in workphone1");
+					document.getElementById('phy_workphone1').focus();
+					return false;
+				}    
+				 if(document.getElementById('phy_workphone1').value.search(renum1digit)!=-1) 
+				{
+					alert("Required field missing:Number inside workphone1 should not start with number 1 or 0");    
+							document.getElementById('phy_workphone1').focus();
+					return false;
+				}
+				 if(document.getElementById('phy_workphone1').value.search(re10digit)==-1) 
+				{
+					alert("Required field missing:Please enter a valid 10 digit number inside workphone1");
+							document.getElementById('phy_workphone1').focus();
+					return false;
+				 }
+				 if(trimAll(document.getElementById('phy_workphone2').value) == ""){
+					alert("Required field missing: Please enter the value in workphone2");
+					document.getElementById('phy_workphone2').focus();
+					return false;
+				} 
+				if(document.getElementById('phy_workphone2').value.search(renum1digit)!=-1) 
+				{
+					alert("Required field missing:Number inside workphone2 should not start with number 1 or 0");    
+							document.getElementById('phy_workphone2').focus();
+					return false;
+				}
+				 if(document.getElementById('phy_workphone2').value.search(re10digit)==-1) 
+				{
+					alert("Required field missing:Please enter a valid 10 digit number inside workphone2 ");
+							document.getElementById('phy_workphone2').focus();
+					return false;
+				 }
+				 if(trimAll(document.getElementById('phy_homephone').value) == ""){
+					alert("Required field missing: Please enter the value in Homephone");
+					document.getElementById('phy_homephone').focus();
+					return false;
+				}    
+				if(document.getElementById('phy_homephone').value.search(renum1digit)!=-1) 
+				{
+					alert("Required field missing:Number inside homephone should not start with number 1 or 0");    
+							document.getElementById('phy_homephone').focus();
+					return false;
+				}
+				 if(document.getElementById('phy_homephone').value.search(re10digit)==-1) 
+				{
+					alert("Required field missing:Please enter a valid 10 digit number inside homephone ");
+							document.getElementById('phy_homephone').focus();
+					return false;
+				 }
+				 if(trimAll(document.getElementById('phy_email').value) == ""){
+					alert("Required field missing: Please enter the value in Email");
+					document.getElementById('phy_email').focus();
+					return false;
+				}    
+				 if(emailvalidation.test(document.getElementById('phy_email').value) == false) {
+					alert("Required field missing:Please enter a valid email");
+					return false;
+				 }
+
+				/*
+				 if(trimAll(document.getElementById('phy_licenseStateCode').value) == ""){
+					alert("Required field missing: Please enter the value in LicenseStateCode");
+					document.getElementById('phy_licenseStateCode').focus();
+					return false;
+				}    
+				if(trimAll(document.getElementById('access_group').value) == ""){
+					alert("Required field missing: Please select the Access group");
+					document.getElementById('access_group').focus();
+					return false;
+				}
+				 if(document.getElementById('phy_licenseStateCode').value.search(re2digit)==-1) 
+				{
+					alert("Required field missing:Please enter a valid 2 digit number inside LicenseStateCode");
+					return false;
+				 }							 
+				*/
+
+				 if(document.getElementById('phy_sex').value=='') 
+				{
+					alert("Required field missing:Please select a sex");
+					return false;
+				 }
+
+				 
+				if(trimAll(document.getElementById('phy_npi').value) == ""){
+					alert("Required field missing: Please enter the value in npi");
+					document.getElementById('phy_npi').focus();
+					return false;
+				}    
+				 if(document.getElementById('phy_npi').value.search(re10digit)==-1) 
+				{
+					alert("Required field missing:Please enter a valid 10 digit number inside npi");
+					return false;
+				 }
+				/* if(trimAll(document.getElementById('deanumber').value) == ""){
+					alert("Required field missing: Please enter the value in deanumber");
+					document.getElementById('deanumber').focus();
+					return false;
+				}    
+				 
+				if(!aphanumeric(document.getElementById('deanumber').value))
+				{
+								alert('Required field missing:Please input valid alphanumeric value and the length should be of 9');
+							   document.getElementById('deanumber').focus();             
+								return false;
+								
+				} */   
+
+	                       }//Physician loop
+
+	                   }//if selected
+
+		}//for loop closed
+		if (document.forms[0].rumple.value.length<=0)
+		{document.forms[0].rumple.focus();document.forms[0].rumple.style.backgroundColor="red";return false;}
+		if (document.forms[0].stiltskin.value.length<=0)
+		{document.forms[0].stiltskin.focus();document.forms[0].stiltskin.style.backgroundColor="red";return false;}
 		top.restoreSession();
 
 		//Checking if secure password is enabled or disabled.
@@ -43,12 +289,11 @@ function submitform() {
 		document.forms[0].newauthPass.value=MD5(document.forms[0].stiltskin.value);
 		document.forms[0].stiltskin.value='';
 		document.forms[0].submit();
-	} else {
-		if (document.forms[0].rumple.value.length<=0)
-		{document.forms[0].rumple.focus();document.forms[0].rumple.style.backgroundColor="red";}
-		if (document.forms[0].stiltskin.value.length<=0)
-		{document.forms[0].stiltskin.focus();document.forms[0].stiltskin.style.backgroundColor="red";}
-	}
+		
+	//}
+
+	
+	
 }
 function authorized_clicked() {
      var f = document.forms[0];
@@ -69,6 +314,11 @@ function authorized_clicked() {
 	<span class='css_button_span large_button_span'><?php xl('Cancel','e');?></span>
 </a>
 </td></tr></table>
+
+<span style="margin-left: 370px;color:#000000;font-family:Tahoma,Arial,Helvetica,sans-serif;font-size:11px;font-weight:normal;line-height:16px;">
+* Required when creating a physician account
+</span>
+
 <br><br>
 
 <table border=0>
@@ -80,7 +330,7 @@ function authorized_clicked() {
 <input type=hidden name=secure_pwd value="<? echo $GLOBALS['secure_password']; ?>">
 <span class="bold">&nbsp;</span>
 </td><td>
-<table border=0 cellpadding=0 cellspacing=0 style="width:600px;">
+<table border=0 cellpadding=0 cellspacing=4 style="width:650px;">
 <tr>
 <td style="width:150px;"><span class="text"><?php xl('Username','e'); ?>: </span></td><td  style="width:220px;"><input type=entry name=rumple style="width:120px;"> <span class="mandatory">&nbsp;*</span></td>
 <td style="width:150px;"><span class="text"><?php xl('Password','e'); ?>: </span></td><td style="width:250px;"><input type="entry" style="width:120px;" name=stiltskin><span class="mandatory">&nbsp;*</span></td>
@@ -127,6 +377,201 @@ if ($fres) {
 </select></td>
 </tr>
 <tr>
+		<td><span class="text"><?php xl('Address','e'); ?>: *</span></td>
+		<td><input type="entry" name="phy_street" id="phy_street" size="20">
+		</td>
+							<td>
+							<span class="text">
+								<?php xl('Suffix','e'); ?>: *
+							</span>
+						</td>
+						<td>
+							<select name='phy_suffix' id='phy_suffix'>
+								<option value="0">--Select--</option>
+									<?php
+									$erx_suff = sqlStatement("select id,name from erx_physician_suffix");
+									$i =0;
+									while($erx_suff_arr = sqlFetchArray($erx_suff))
+									{
+										$suffix['name'][$i]  = $erx_suff_arr['name'];
+										$suffix['id'][$i]  = $erx_suff_arr['id'];
+
+								                if($suffix['id'][$i] == $iter['suffix'])
+										{
+										  ?><option value="<?php echo $suffix['id'][$i];?>" selected="selected"><?php echo $suffix['name'][$i];?></option><?php
+										}
+										else
+										{
+											  ?><option value="<?php echo $suffix['id'][$i];?>"><?php echo $suffix['name'][$i];?></option><?php
+										}
+
+										$i++;
+									}
+									?>
+							</select>
+						</td>	
+					</tr>			
+					
+					<tr>
+						<td>
+							<span class="text">
+								<?php xl('Address2','e'); ?>: 
+							</span>
+						</td>
+						<td>
+							<input type="entry" name="phy_street2" id="phy_street2" size="20" >
+						</td>
+						<td>
+							<span class="text">
+								<?php xl('City','e'); ?>: *
+							</span>
+						</td>
+						<td>
+							<input type="entry" name="phy_city" id ="phy_city" size="20" >
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<span class="text">
+								<?php xl('Zip','e'); ?>: *
+							</span>
+						</td>
+						<td>
+							<input type="entry" name="phy_zip" maxlength="5" id="phy_zip" size="20"  value="<?php echo $iter['zip']; ?>">
+						</td>
+						<td>
+							<span class="text">
+								<?php xl('State','e'); ?>: *
+							</span>
+						</td>
+						<td>
+							<select name="phy_state" id="phy_state">
+								<option value="0">--Select--</option>
+								<?php
+								$state_res = sqlStatement("select title,option_id from list_options where list_id = 'state'");
+								$i =0;
+								while($state_arr = sqlFetchArray($state_res))
+								{
+									$main_arr[$i]  = $state_arr['title'];
+									$optionid[$i]  = $state_arr['option_id'];
+									$i++;
+								}
+
+								for($counter=0;$counter < count($main_arr);$counter++)
+								{
+									 if($optionid[$counter] == $iter["state"])
+									{
+								       ?>
+								<option value="<?php echo $optionid[$counter]; ?>" selected="selected"><?php echo $main_arr[$counter];?></option>
+								<?php
+									}
+									  else
+									{
+								       ?>
+								<option value="<?php echo $optionid[$counter]; ?>"><?php echo $main_arr[$counter];?></option>
+								<?php
+									}
+								}
+
+								?>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<span class="text">
+								<?php xl('Phone','e'); ?>: *
+							</span>
+						</td>
+						<td>
+							<input type="entry" name="phy_phone" id="phy_phone" maxlength="10"  size="20" >
+						</td>
+						<td>
+							<span class="text">
+								<?php xl('Fax','e'); ?>: *
+							</span>
+						</td>
+						<td>
+							<input type="entry" maxlength="10" name="phy_fax" id = "phy_fax" size="20" >
+						</td>
+					</tr>	
+					<tr>
+						<td>
+							<span class="text">
+								<?php xl('Work Phone1','e'); ?>: *
+							</span>
+						</td>
+						<td>
+							<input type="entry" name="phy_workphone1" maxlength="10" id="phy_workphone1" size="20" value="<?php echo $iter['phonew1']; ?>">
+						</td>
+						<td>
+							<span class="text">
+								<?php xl('Work Phone2','e'); ?>: *
+							</span>
+						</td>
+						<td>
+							<input type="entry" name="phy_workphone2" maxlength="10" id="phy_workphone2" size="20" value="<?php echo $iter['phonew2']; ?>">
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<span class="text">
+								<?php xl('Home Phone','e'); ?>: *
+							</span>
+						</td>
+						<td>
+							<input type="entry" name="phy_homephone" id="phy_homephone" maxlength="10" size="20" value="<?php echo $iter['phonecell']; ?>">
+						</td>
+						<td>
+							<span class="text">
+								<?php xl('Email','e'); ?>: *
+							</span>
+						</td>
+						<td>
+							<input type="entry"  name="phy_email" id ="phy_email" size="20" maxlength="25" value="<?php echo $iter['email']; ?>">
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<span class="text">
+								<?php xl('License Number','e'); ?>: 
+							</span>
+						</td>
+						<td>
+							<input type="entry" name="phy_licenseNo" maxlength="10" id="phy_licenseNo" value="<?php echo $iter['licenseNo'];?>" size="20">
+						</td>
+						<td>
+							<span class="text">
+								<?php xl('NPI','e'); ?>: *
+							</span>
+						</td>
+						<td>
+							<input type="text" name="phy_npi" id="phy_npi" size="20" value="<?php echo $iter['npi']?>" maxlength="10">
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<span class="text">
+								<?php xl('DEA Number','e'); ?>: 	
+							</span>
+						</td>
+						<td>
+							<input type="entry" maxlength="9" name="deanumber" id="deanumber" size="20" value="<?php echo $iter['dea']; ?>">
+						</td>
+						<td>
+							<span class="text">
+								<?php xl('Sex','e'); ?>: *
+							</span>	
+						</td>
+						<td>
+							<select name="phy_sex" id="phy_sex">
+								<option value="">--Select--</option>									
+								<option value="Male">Male</option>
+								<option value="Female" >Female</option>									
+							</select>
+						</td>
+					</tr>
+<tr>
 <td><span class="text"><?php xl('Federal Tax ID','e'); ?>: </span></td><td><input type=entry name='federaltaxid' style="width:120px;"></td>
 <td><span class="text"><?php xl('Federal Drug ID','e'); ?>: </span></td><td><input type=entry name='federaldrugid' style="width:120px;"></td>
 </tr>
@@ -144,7 +589,6 @@ if ($fres) {
 </select></td>
 
 <tr>
-<td><span class="text"><?php xl('NPI','e'); ?>: </span></td><td><input type="entry" name="npi" style="width:120px;"></td>
 <td><span class="text"><?php xl('Job Description','e'); ?>: </span></td><td><input type="entry" name="specialty" style="width:120px;"></td>
 </tr>
 
@@ -190,7 +634,7 @@ echo generate_select_list('irnpool', 'irnpool', '',
 ?>
   <tr>
   <td class='text'><?php xl('Access Control','e'); ?>:</td>
-  <td><select name="access_group[]" multiple style="width:120px;">
+  <td><select name="access_group[]" id="access_group" multiple style="width:120px;">
   <?php
    $list_acl_groups = acl_get_group_title_list();
    $default_acl_group = 'Administrators';

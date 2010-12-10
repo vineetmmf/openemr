@@ -137,28 +137,82 @@ function dateblur(e, defcc, withtime) {
 
  if (arr[2] == 1) {
   e.value = v.substring(0, 8) + '0' + v.substring(8);
+  v = e.value;
+ }
+
+ // don't allow setting dates in past
+ if (future_only == true) {
+	var now = new Date();
+	var month = now.getMonth() + 1;
+	var day = now.getDate();
+	var year = now.getYear();
+	if(year < 2000) { year = year + 1900; }
+
+	var today = parseInt(year*10000 + month*100 + day);
+	var cdate = parseInt(v.substring(0,4)*10000 + v.substring(5,7)*100 + v.substring(8,10)*1);
+	if(today > cdate) {
+		// alert("You cannot schedule a date before today:" + today + " > " +
+		// cdate + ".");
+		alert("You cannot schedule a date in the past.");
+		if(month < 10) {
+			e.value = year + "-" + "0" + month + "-" + day;
+		} else {
+			e.value = year + "-" + month + "-" + day;
+		}
+		e.focus();
+	}
  }
 }
 
 // Private subroutine for US phone number formatting.
-function usphone(v) {
- if (v.length > 0 && v.charAt(0) == '-') v = v.substring(1);
- var oldlen = v.length;
- for (var i = 0; i < v.length; ++i) {
-  var c = v.charAt(i);
-  if (c < '0' || c > '9') {
-   v = v.substring(0, i) + v.substring(i + 1);
-   --i;
-  }
- }
- if (oldlen > 3 && v.length >= 3) {
-  v = v.substring(0, 3) + '-' + v.substring(3);
-  if (oldlen > 7 && v.length >= 7) {
-   v = v.substring(0, 7) + '-' + v.substring(7);
-   if (v.length > 12) v = v.substring(0, 12);
-  }
- }
- return v;
+function usphone(v) 
+{	
+	if (v.length > 0 && v.charAt(0) == '-') v = v.substring(1);
+	
+	if(isAlphabet(v) || !isAllowedChars(v))
+	{
+		alert('Please enter digits only.');	
+		v = v.substring(0, (v.length-1));
+	}
+	else
+	{
+		while(!isNumeric(v))
+		{				
+			v = v.replace('(','');
+			v = v.replace(')','');
+			v = v.replace('-','');		
+		}
+		
+		var oldlen = v.length;
+		 
+		for (var i = 0; i < v.length; ++i) 
+		{
+			var c = v.charAt(i);
+			
+			if (c < '0' || c > '9') 
+			{	 
+				v = v.substring(0, i) + v.substring(i + 1);
+				--i;
+			}
+		}
+		 
+		if (oldlen > 3 && v.length >= 3) 
+		{
+			v = '('+v.substring(0, 3) + ')' + v.substring(3);
+			
+			if (oldlen > 6 && v.length >= 8) 			
+			{
+				v = v.substring(0, 8) + '-' + v.substring(8);
+				
+				if (v.length > 13) 
+				{
+					v = v.substring(0, 13);
+				}   
+			}
+		}						
+	}	
+	
+	return v;
 }
 
 // Private subroutine for non-US phone number formatting.
@@ -180,7 +234,23 @@ var twodigitccs = '/20/30/31/32/33/34/36/39/40/41/43/44/45/46/47/48/49/51/52/53/
 // format and to reduce typing errors.  defcc is the default telephone
 // country code as a string.
 //
-function phonekeyup(e, defcc) {
+function postalcodekeyup(e)
+{
+
+	if(e.value.length !=0)
+		{
+			var re5digit= /^\d{5}$/ ;
+            var variable = e.value;					
+					
+			if(variable.search(re5digit)==-1) 
+			{
+				alert("Required field missing:Please enter a valid 5 digit number inside the postal_code");
+				return ;
+			 }
+		}
+}
+
+function phonekeyup(e, defcc) {	
  var v = e.value;
  var oldlen = v.length;
 
@@ -228,6 +298,216 @@ function phonekeyup(e, defcc) {
 
  return;
 }
+
+// function to check the length of a phone number field, it would not allow
+// number larger than 10 characters..
+function chkLength(obj)
+{
+	var v = obj.value;
+		
+	if(v.length > 13)
+	{
+		alert('You can not enter more digits as the maximum length allowed is 10 digits.');
+		obj.value = obj.value.substring(0, 13);
+		phonekeyup(obj, mypcc);		
+		return false;
+	}
+	
+	phonekeyup(obj, mypcc);
+}
+
+function isAllowedChars(sText)
+{
+	var ValidChars = ")(-0123456789";
+    var IsAllow=true;
+    var Char;
+    var len = sText.length;
+    
+    if(!isNumeric(sText))
+    {	
+    	for (var i = 0; i < len && IsAllow == true; i++) 
+    	{ 
+    		Char = sText.charAt(i);     		
+    		if (ValidChars.indexOf(Char) == -1) 
+    		{
+    			IsAllow = false;    			
+    		}
+    	}
+    }	
+    
+   	return IsAllow;	
+}
+function isAlphabet(sText)
+{
+	var ValidChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    var IsAlpha=false;
+    var Char;
+    var len = sText.length;
+     
+    for (var i = 0; i < len && IsAlpha == false; i++) 
+	{ 
+	   	Char = sText.charAt(i); 
+	   	
+	   	if (ValidChars.indexOf(Char) != -1) 
+	    {
+	   		IsAlpha = true;	   		
+	    }
+	}
+   
+   	return IsAlpha;
+}
+function isNumeric(sText)
+{
+   	var ValidChars = "0123456789";
+    var IsNumber=true;
+    var Char;
+    var len = sText.length;
+ 
+	for (var i = 0; i < len && IsNumber == true; i++) 
+   	{ 
+    	Char = sText.charAt(i); 
+      	if (ValidChars.indexOf(Char) == -1) 
+        {
+        	IsNumber = false;
+        }
+     }
+
+   	return IsNumber;   
+}
+
+function validateSSN(ssnObj)
+{	
+	if(SSNValidation(ssnObj))
+	{
+		var ssnPart = '';
+		var ssnPart2 = '';
+		var ssnPart3 = '';
+		var ssnValue = ssnObj.value;
+		
+		while(!isNumeric(ssnValue))
+		{
+			ssnValue = ssnValue.replace("-", "");
+		}
+		
+		if(ssnValue.length > 9 && isNumeric(ssnValue))
+		{
+			alert("S.S. can not be any more than 9 digits.");
+			ssnValue  = ssnValue.substring(0, 9);				
+		}	
+	
+		if(ssnValue.length >= 3 && isNumeric(ssnValue))
+		{
+			ssnPart = ssnValue.substring(0, 3);
+	
+			if(ssnValue.length > 3)
+		    {    
+		    	ssnPart2 = ssnValue.substring(3, 5);
+		    	ssnPart3 = ssnValue.substring(5, ssnValue.length);
+		    }
+			else
+				ssnPart2 = ssnValue.substring(4, ssnValue.length);		
+		}       
+		
+		// alert('ssnPart = '+ssnPart+', ssnPart2 = '+ssnPart2+', ssnPart3 =
+		// '+ssnPart3);
+	
+		if(ssnPart!='')
+			ssnObj.value = ssnPart + "-";
+		if(ssnPart2!='')
+			ssnObj.value += ssnPart2 + "-";
+		if(ssnPart3!='')
+			ssnObj.value +=	ssnPart3;
+	}
+}
+
+function SSNValidation(ssnObj) {
+	var ssn = ssnObj.value;
+	var matchArr = ssn.match(/^(\d{3})-?\d{2}-?\d{4}$/);
+	var numDashes = ssn.split('-').length - 1;
+	
+	if (matchArr == null || numDashes == 1) {
+		alert('Invalid SSN. Must be 9 digits or in the form NNN-NN-NNNN.');		
+		ssnObj.focus();
+		return false;
+	}
+	else if (parseInt(matchArr[1],10)==0) {
+		alert("Invalid SSN: SSN's can't start with 000.");
+		ssnObj.focus();
+		return false;
+	}
+
+	return true;	
+}
+
+function stripHtmlTagsFromInput(frmObj)
+{
+	var len = frmObj.elements.length;
+	// alert(len);  return false;
+	
+	if(len > 0)
+	{
+	    for(var i=0; i<len; i++)		
+	    {
+		    if(frmObj.elements[i].type=='text' || frmObj.elements[i].type=='textarea')
+		    {
+			    var str = frmObj.elements[i].value;
+			    var matchArr = str.match(/[<>=]/g);
+
+			    if(matchArr != null) 
+			    {
+				    alert('Invalid input. No HTML tags or <, >, = allowed.');		
+				    frmObj.elements[i].focus();
+				    return false;
+			    }
+		    }		
+	    }	
+	}
+
+   	return true;
+}
+
+// To show /Hide the div/span [function argument - div/span id]
+
+function showHide(id, more)
+{
+	var spanstyle = new String();
+
+	spanstyle = document.getElementById(id).style.visibility;
+	
+	
+	if(spanstyle.toLowerCase()=="visible" || spanstyle == "")
+	{
+		document.getElementById(id).style.visibility = "hidden";
+		document.getElementById(id).style.display = "none";
+	}
+	else
+	{
+		document.getElementById(id).style.visibility = "visible";
+		document.getElementById(id).style.display = "inline";
+	}
+
+	if(more){
+		moreopenspanstyle = document.getElementById("open").style.visibility;
+		moreclosespanstyle = document.getElementById("close").style.visibility;
+		
+		if(moreopenspanstyle.toLowerCase()=="visible" || spanstyle == "")
+		{
+			document.getElementById('open').style.visibility = "hidden";
+			document.getElementById('open').style.display = "none";
+			document.getElementById('close').style.visibility = "visible";
+			document.getElementById('close').style.display = "inline";
+		}
+		else
+		{
+			document.getElementById('open').style.visibility = "visible";
+			document.getElementById('open').style.display = "inline";
+			document.getElementById('close').style.visibility = "hidden";
+			document.getElementById('close').style.display = "none";
+		}
+
+	}	
+}
+
 
 // onKeyUp handler for mask-formatted fields.
 // This feature is experimental.

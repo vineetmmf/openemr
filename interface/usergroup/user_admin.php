@@ -36,6 +36,73 @@ if ($_GET["mode"] == "update") {
     $tqvar = formData('upin','G');
     sqlStatement("update users set upin='$tqvar' where id={$_GET["id"]}");
   }
+  
+  if ($_GET["phy_suffix"]) {
+    $tqvar = formData('phy_suffix','G');
+
+
+    sqlStatement("update users set suffix='$tqvar' where id='".$_GET["id"]."'");
+  }
+
+  if ($_GET["phy_licenseNo"]) {
+    $tqvar = formData('phy_licenseNo','G');
+    sqlStatement("update users set licenseNo='$tqvar' where id='".$_GET["id"]."'");
+  }
+
+
+   if ($_GET["phy_city"]) {
+    $tqvar = formData('phy_city','G');
+    sqlStatement("update users set city='$tqvar' where id='".$_GET["id"]."'");
+  }
+
+    if ($_GET["phy_homephone"]) {
+    $tqvar = formData('phy_homephone','G');
+    sqlStatement("update users set phonecell='$tqvar' where id='".$_GET["id"]."'");
+  }
+   if ($_GET["phy_email"]) {
+    $tqvar = formData('phy_email','G');
+    sqlStatement("update users set email='$tqvar' where id='".$_GET["id"]."'");
+  }
+  if ($_GET["phy_street"]) {
+    $tqvar = formData('phy_street','G');
+    sqlStatement("update users set street='$tqvar' where id='".$_GET["id"]."'");
+	 }
+	 if ($_GET["phy_street2"]) {
+    $tqvar = formData('phy_street2','G');
+    sqlStatement("update users set street2='$tqvar' where id='".$_GET["id"]."'");
+  }
+
+  if ($_GET["phy_state"]) {
+    $tqvar = formData('phy_state','G');
+    sqlStatement("update users set state='$tqvar' where id='".$_GET["id"]."'");
+  }
+  if ($_GET["phy_zip"]) {
+    $tqvar = formData('phy_zip','G');
+    sqlStatement("update users set zip='$tqvar' where id='".$_GET["id"]."'");
+  }
+
+  if ($_GET["phy_phone"]) {
+    $tqvar = formData('phy_phone','G');
+    sqlStatement("update users set phone='$tqvar' where id='".$_GET["id"]."'");
+  }
+  if ($_GET["phy_fax"]) {
+    $tqvar = formData('phy_fax','G');
+    sqlStatement("update users set fax='$tqvar' where id='".$_GET["id"]."'");
+  }
+    if ($_GET["phy_workphone1"]) {
+    $tqvar = formData('phy_workphone1','G');
+    sqlStatement("update users set phonew1='$tqvar' where id='".$_GET["id"]."'");
+  }
+  if ($_GET["phy_workphone2"]) {
+    $tqvar = formData('phy_workphone2','G');
+    sqlStatement("update users set phonew2='$tqvar' where id='".$_GET["id"]."'");
+  }
+
+    if ($_GET["deanumber"]) {
+    $tqvar = formData('deanumber','G');
+    sqlStatement("update users set dea='$tqvar' where id='".$_GET["id"]."'");
+  }
+  
   if ($_GET["npi"]) {
     $tqvar = formData('npi','G');
     sqlStatement("update users set npi='$tqvar' where id={$_GET["id"]}");
@@ -181,8 +248,46 @@ parent.$.fn.fancybox.close();
 <script src="checkpwd_validation.js" type="text/javascript"></script>
 
 <script language="JavaScript">
+function trimAll(sString)
+{
+	while (sString.substring(0,1) == ' ')
+	{
+		sString = sString.substring(1, sString.length);
+	}
+	while (sString.substring(sString.length-1, sString.length) == ' ')
+	{
+		sString = sString.substring(0,sString.length-1);
+	}
+	return sString;
+} 
+
+function aphanumeric(alphane) {
+          
+            var numaric = alphane;
+            for(var j=0; j<numaric.length; j++)
+            {
+                var alphaa = numaric.charAt(j);
+                var hh = alphaa.charCodeAt(0);
+               if(((hh > 47 && hh<58) || (hh > 64 && hh<91) || (hh > 96 && hh<123)) && alphane.length == 9)
+                {
+       
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            return true;
+}
+
 function submitform() {
 	top.restoreSession();
+	var re5digit=/^\d{5}$/ //regular expression defining a 5 digit number
+	var renum1digit=/^([0-1])+\d{9}$/ ;
+	var re10digit=/^\d{10}$/ //regular expression defining a 10 digit number
+	var emailvalidation = /^([A-Za-z0-9_\-\.])+\@([A-Za-z0-9_\-\.])+\.([A-Za-z]{2,4})$/;
+	var restreetvalidation = /^([0-9])+\s([A-Za-z])+([\sA-Za-z])+$/;
+
 	var flag=0;
 	if(document.forms[0].clearPass.value!="")
 	{
@@ -226,6 +331,236 @@ function submitform() {
             }
           }
 
+	for(i = 0; i < document.forms[0].access_group_id.length; i++)
+	{ 
+	   if (document.forms[0].access_group_id.options[i].selected)  
+	   {
+	     if(document.forms[0].access_group_id.options[i].text =="Physicians")
+	       {
+
+    
+			if(document.getElementById('phy_suffix').value=='0') 
+			{
+				flag == 1;
+				alert("Required field missing:Please select a suffix");
+				return false;
+			 }
+			if(trimAll(document.getElementById('phy_street').value) == ""){
+				flag == 1;
+				alert("Required field missing: Please enter the Address");
+				document.getElementById('phy_street').focus();
+				return false;
+			}
+			if(document.getElementById('phy_street').value.search(restreetvalidation)==-1)
+			{
+				 flag == 1;
+				 alert("Invalid Input: Address should contain numbers and alphabets with space.\nFor example 304 Sterling Ave");
+			     document.getElementById('phy_street').focus();
+			     return false;
+			}
+			/*if(trimAll(document.getElementById('phy_street2').value) == ""){
+				flag == 1;
+				alert("Required field missing: Please enter the Address2");
+				document.getElementById('phy_street2').focus();
+				return false;
+			}	*/			
+			if(trimAll(document.getElementById('phy_city').value) == ""){
+				flag == 1;
+				alert("Required field missing: Please enter the city");
+				document.getElementById('phy_city').focus();
+				return false;
+			}
+			if(trimAll(document.getElementById('phy_zip').value) == ""){
+				flag == 1;
+				alert("Required field missing: Please enter the zip");
+				document.getElementById('phy_zip').focus();
+				return false;
+			}    
+			if(document.getElementById('phy_zip').value.search(re5digit)==-1) 
+			{
+				flag == 1;
+				alert("Required field missing:Please enter a valid 5 digit number inside the zip");
+				return false;
+			 }
+			if(document.getElementById('phy_state').value=='0') 
+			{
+				flag == 1;
+				alert("Required field missing:Please select a state");
+				return false;
+			 }
+			if(trimAll(document.getElementById('phy_phone').value) == ""){
+				flag == 1;
+				alert("Required field missing: Please enter the phone");
+				document.getElementById('phy_phone').focus();
+				return false;
+			}    
+			if(document.getElementById('phy_phone').value.search(renum1digit)!=-1) 
+			{
+				flag == 1;
+				alert("Required field missing:Number inside phone should not start with number 1 or 0");    
+				document.getElementById('phy_phone').focus();
+				return false;
+			}
+			if(document.getElementById('phy_phone').value.search(re10digit)==-1) 
+			{
+				flag == 1;
+				alert("Required field missing:Please enter a valid 10 digit number inside the phone ");
+				document.getElementById('phy_phone').focus();
+				return false;
+			 }
+			 
+			if(trimAll(document.getElementById('phy_fax').value) == ""){
+				flag == 1;
+				alert("Required field missing: Please enter the value in fax");
+				document.getElementById('phy_fax').focus();
+				return false;
+			}    
+			
+			if(document.getElementById('phy_fax').value.search(renum1digit)!=-1) 
+			{
+				flag == 1;
+				alert("Required field missing:Number inside Fax should not start with number 1 or 0");    
+				document.getElementById('phy_fax').focus();
+				return false;
+			}
+			 if(document.getElementById('phy_fax').value.search(re10digit)==-1) 
+			{
+				flag == 1;
+				alert("Required field missing:Please enter a valid 10 digit number inside fax ");
+				return false;
+			 }
+			 
+				if(trimAll(document.getElementById('phy_workphone1').value) == ""){
+				flag == 1;
+				alert("Required field missing: Please enter the value in workphone1");
+				document.getElementById('phy_workphone1').focus();
+				return false;
+			}    
+			 if(document.getElementById('phy_workphone1').value.search(renum1digit)!=-1) 
+			{
+				flag == 1;
+				alert("Required field missing:Number inside workphone1 should not start with number 1 or 0");    
+				document.getElementById('phy_workphone1').focus();
+				return false;
+			}
+			 if(document.getElementById('phy_workphone1').value.search(re10digit)==-1) 
+			{
+				flag == 1;
+				alert("Required field missing:Please enter a valid 10 digit number inside workphone1");
+				document.getElementById('phy_workphone1').focus();
+				return false;
+			 }
+			 if(trimAll(document.getElementById('phy_workphone2').value) == ""){
+				flag == 1;
+				alert("Required field missing: Please enter the value in workphone2");
+				document.getElementById('phy_workphone2').focus();
+				return false;
+			} 
+			if(document.getElementById('phy_workphone2').value.search(renum1digit)!=-1) 
+			{
+				flag == 1;
+				alert("Required field missing:Number inside workphone2 should not start with number 1 or 0");    
+				document.getElementById('phy_workphone2').focus();
+				return false;
+			}
+			 if(document.getElementById('phy_workphone2').value.search(re10digit)==-1) 
+			{
+				flag == 1;
+				alert("Required field missing:Please enter a valid 10 digit number inside workphone2 ");
+				document.getElementById('phy_workphone2').focus();
+				return false;
+			 }
+			 if(trimAll(document.getElementById('phy_homephone').value) == ""){
+				flag == 1;
+				alert("Required field missing: Please enter the value in Homephone");
+				document.getElementById('phy_homephone').focus();
+				return false;
+			}    
+			if(document.getElementById('phy_homephone').value.search(renum1digit)!=-1) 
+			{
+				flag == 1;
+				alert("Required field missing:Number inside homephone should not start with number 1 or 0");    
+				document.getElementById('phy_homephone').focus();
+				return false;
+			}
+			 if(document.getElementById('phy_homephone').value.search(re10digit)==-1) 
+			{
+				flag == 1;				
+				alert("Required field missing:Please enter a valid 10 digit number inside homephone ");
+				document.getElementById('phy_homephone').focus();
+				return false;
+			 }
+			 if(trimAll(document.getElementById('phy_email').value) == ""){
+				flag == 1;
+				alert("Required field missing: Please enter the value in Email");
+				document.getElementById('phy_email').focus();
+				return false;
+			}    
+			 if(emailvalidation.test(document.getElementById('phy_email').value) == false) {
+				flag == 1;
+				alert("Required field missing:Please enter a valid email");
+				return false;
+			 }
+
+			/*
+			 if(trimAll(document.getElementById('phy_licenseStateCode').value) == ""){
+				alert("Required field missing: Please enter the value in LicenseStateCode");
+				document.getElementById('phy_licenseStateCode').focus();
+				return false;
+			}    
+			if(trimAll(document.getElementById('access_group').value) == ""){
+				alert("Required field missing: Please select the Access group");
+				document.getElementById('access_group').focus();
+				return false;
+			}
+			 if(document.getElementById('phy_licenseStateCode').value.search(re2digit)==-1) 
+			{
+				alert("Required field missing:Please enter a valid 2 digit number inside LicenseStateCode");
+				return false;
+			 }							 
+			*/
+
+			 if(document.getElementById('phy_sex').value=='') 
+			{
+				flag == 1;
+				alert("Required field missing:Please select a sex");
+				return false;
+			 }
+
+			 
+			if(trimAll(document.getElementById('phy_npi').value) == ""){
+				flag == 1;
+				alert("Required field missing: Please enter the value in npi");
+				document.getElementById('phy_npi').focus();
+				return false;
+			}    
+			 if(document.getElementById('phy_npi').value.search(re10digit)==-1) 
+			{
+				flag == 1;	
+				alert("Required field missing:Please enter a valid 10 digit number inside npi");
+				return false;
+			 }
+			/* if(trimAll(document.getElementById('deanumber').value) == ""){
+				flag == 1;
+				alert("Required field missing: Please enter the value in deanumber");
+				document.getElementById('deanumber').focus();
+				return false;
+			}    
+			 
+			if(!aphanumeric(document.getElementById('deanumber').value))
+			{	
+				flag == 1;
+				alert('Required field missing:Please input valid alphanumeric value and the length should be of 9');
+			    document.getElementById('deanumber').focus();             
+				return false;
+							
+			} */   
+
+           }//Physician loop
+
+         }//if selected
+
+	}//for loop closed
 	if(flag == 0){
 		document.forms[0].newauthPass.value=MD5(document.forms[0].clearPass.value);document.forms[0].clearPass.value='';
 		document.forms[0].submit();
@@ -264,6 +599,11 @@ function authorized_clicked() {
 	<a class="css_button" id='cancel' href='#'><span><?php xl('Cancel','e');?></span></a>
 </td></tr>
 </table>
+
+<span style="margin-left: 370px;color:#000000;font-family:Tahoma,Arial,Helvetica,sans-serif;font-size:11px;font-weight:normal;line-height:16px;">
+* Required when creating a physician account
+</span>
+
 <br>
 <FORM NAME="user_form" METHOD="GET" ACTION="usergroup_admin.php" target="_parent" onsubmit='return top.restoreSession()'>
 <input type=hidden name="pwd_history" value="<? echo $GLOBALS['password_history']; ?>" >
@@ -299,7 +639,7 @@ $bg_count=count($acl_name);
 ?>
 <input type=hidden name="user_type" value="<? echo $bg_name; ?>" >
 
-<TABLE border=0 cellpadding=0 cellspacing=0>
+<TABLE border=0 cellpadding=0 cellspacing=4 style="width:660px;" >
 <TR>
 <TD style="width:180px;"><span class=text><?php xl('Username','e'); ?>: </span></TD><TD style="width:270px;"><input type=entry name=username style="width:150px;" value="<?php echo $iter["username"]; ?>" disabled></td>
 <TD style="width:200px;"><span class=text><?php xl('Password','e'); ?>: </span></TD><TD class='text' style="width:280px;"><input type=entry name=clearPass style="width:150px;"  value=""><font class="mandatory">*</font></td>
@@ -342,7 +682,222 @@ foreach($result as $iter2) {
 ?>
 </select></td>
 </tr>
+	<tr>
+		<td><span class="text"><?php xl('Address','e'); ?>: *</span></td>
+		<td><input type="entry" name="phy_street" id="phy_street" size="20" value="<?php echo $iter['street']; ?>">
+		</td>
+							<td>
+							<span class="text">
+								<?php xl('Suffix','e'); ?>: *
+							</span>
+						</td>
+						<td>
+							<select name='phy_suffix' id='phy_suffix'>
+								<option value="0">--Select--</option>
+									<?php
+									$erx_suff = sqlStatement("select id,name from erx_physician_suffix");
+									$i =0;
+									while($erx_suff_arr = sqlFetchArray($erx_suff))
+									{
+										$suffix['name'][$i]  = $erx_suff_arr['name'];
+										$suffix['id'][$i]  = $erx_suff_arr['id'];
 
+								                if($suffix['id'][$i] == $iter['suffix'])
+										{
+										  ?><option value="<?php echo $suffix['id'][$i];?>" selected="selected"><?php echo $suffix['name'][$i];?></option><?php
+										}
+										else
+										{
+											  ?><option value="<?php echo $suffix['id'][$i];?>"><?php echo $suffix['name'][$i];?></option><?php
+										}
+
+										$i++;
+									}
+									?>
+							</select>
+						</td>	
+					</tr>			
+					
+					<tr>
+						<td>
+							<span class="text">
+								<?php xl('Address2','e'); ?>: 
+							</span>
+						</td>
+						<td>
+							<input type="entry" name="phy_street2" id="phy_street2" size="20"  value="<?php echo $iter['street2']; ?>">
+						</td>
+						<td>
+							<span class="text">
+								<?php xl('City','e'); ?>: *
+							</span>
+						</td>
+						<td>
+							<input type="entry" name="phy_city" id ="phy_city" size="20"  value="<?php echo $iter['city']; ?>">
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<span class="text">
+								<?php xl('Zip','e'); ?>: *
+							</span>
+						</td>
+						<td>
+							<input type="entry" name="phy_zip" maxlength="5" id="phy_zip" size="20"  value="<?php echo $iter['zip']; ?>">
+						</td>
+						<td>
+							<span class="text">
+								<?php xl('State','e'); ?>: *
+							</span>
+						</td>
+						<td>
+							<select name="phy_state" id="phy_state">
+								<option value="0">--Select--</option>
+								<?php
+								$state_res = sqlStatement("select title,option_id from list_options where list_id = 'state'");
+								$i =0;
+								while($state_arr = sqlFetchArray($state_res))
+								{
+									$main_arr[$i]  = $state_arr['title'];
+									$optionid[$i]  = $state_arr['option_id'];
+									$i++;
+								}
+
+								for($counter=0;$counter < count($main_arr);$counter++)
+								{
+									 if($optionid[$counter] == $iter["state"])
+									{
+								       ?>
+								<option value="<?php echo $optionid[$counter]; ?>" selected="selected"><?php echo $main_arr[$counter];?></option>
+								<?php
+									}
+									  else
+									{
+								       ?>
+								<option value="<?php echo $optionid[$counter]; ?>"><?php echo $main_arr[$counter];?></option>
+								<?php
+									}
+								}
+
+								?>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<span class="text">
+								<?php xl('Phone','e'); ?>: *
+							</span>
+						</td>
+						<td>
+							<input type="entry" name="phy_phone" id="phy_phone" maxlength="10"  size="20" value="<?php echo $iter['phone']; ?>">
+						</td>
+						<td>
+							<span class="text">
+								<?php xl('Fax','e'); ?>: *
+							</span>
+						</td>
+						<td>
+							<input type="entry" maxlength="10" name="phy_fax" id = "phy_fax" size="20" value="<?php echo $iter['fax'];?>">
+						</td>
+					</tr>	
+					<tr>
+						<td>
+							<span class="text">
+								<?php xl('Work Phone1','e'); ?>: *
+							</span>
+						</td>
+						<td>
+							<input type="entry" name="phy_workphone1" maxlength="10" id="phy_workphone1" size="20" value="<?php echo $iter['phonew1']; ?>">
+						</td>
+						<td>
+							<span class="text">
+								<?php xl('Work Phone2','e'); ?>: *
+							</span>
+						</td>
+						<td>
+							<input type="entry" name="phy_workphone2" maxlength="10" id="phy_workphone2" size="20" value="<?php echo $iter['phonew2']; ?>">
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<span class="text">
+								<?php xl('Home Phone','e'); ?>: *
+							</span>
+						</td>
+						<td>
+							<input type="entry" name="phy_homephone" id="phy_homephone" maxlength="10" size="20" value="<?php echo $iter['phonecell']; ?>">
+						</td>
+						<td>
+							<span class="text">
+								<?php xl('Email','e'); ?>: *
+							</span>
+						</td>
+						<td>
+							<input type="entry"  name="phy_email" id ="phy_email" size="20" maxlength="25" value="<?php echo $iter['email']; ?>">
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<span class="text">
+								<?php xl('License Number','e'); ?>: 
+							</span>
+						</td>
+						<td>
+							<input type="entry" name="phy_licenseNo" maxlength="10" id="phy_licenseNo" value="<?php echo $iter['licenseNo'];?>" size="20">
+						</td>
+						<td>
+							<span class="text">
+								<?php xl('NPI','e'); ?>: *
+							</span>
+						</td>
+						<td>
+							<input type="text" name="phy_npi" id="phy_npi" size="20" value="<?php echo $iter['npi']?>" maxlength="10">
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<span class="text">
+								<?php xl('DEA Number','e'); ?>: 	
+							</span>
+						</td>
+						<td>
+							<input type="entry" maxlength="9" name="deanumber" id="deanumber" size="20" value="<?php echo $iter['dea']; ?>">
+						</td>
+						<td>
+							<span class="text">
+								<?php xl('Sex','e'); ?>: *
+							</span>	
+						</td>
+						<td>
+							<select name="phy_sex" id="phy_sex">
+								<option value="">--Select--</option>
+									<?php 
+									if($iter['sex'] == '1')
+									{
+									?>
+								<option value="Male" selected="selected">Male</option>
+								<option value="Female" >Female</option>
+									<?php
+									}  
+									if($iter['sex'] == '0')
+									{
+									?>
+								<option value="Male">Male</option>
+								<option value="Female" selected="selected">Female</option>
+									<?php
+									}
+									if($iter['sex'] == '')
+									{
+									?>
+								<option value="Male">Male</option>
+								<option value="Female" >Female</option>
+									<?php
+									}
+									?>
+							</select>
+						</td>
+					</tr>
 <?php if ($GLOBALS['restrict_user_facility']) { ?>
 <tr>
  <td colspan=2>&nbsp;</td>
@@ -390,7 +945,7 @@ foreach($result as $iter2) {
 </tr>
 
 <tr>
-<td><span class="text"><?php xl('NPI','e'); ?>: </span></td><td><input type="text" name="npi" style="width:150px;"  value="<?php echo $iter["npi"]?>"></td>
+
 <td><span class="text"><?php xl('Job Description','e'); ?>: </span></td><td><input type="text" name="job" style="width:150px;"  value="<?php echo $iter["specialty"]?>"></td>
 </tr>
 
