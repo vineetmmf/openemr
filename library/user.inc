@@ -76,7 +76,8 @@ function checkUserSetting($label, $value, $user=NULL) {
 // $name is the setting name in the 'users' table
 // $value is the setting value to be set in the 'users' table
 // $user is the user id number in the 'users' table
-function setUserSetting($label, $value, $user=NULL) {
+// $createDefault is flag to create a default value if it does not yet exist
+function setUserSetting($label, $value, $user=NULL, $createDefault=TRUE) {
 
   // if no user id is sent, then use the currently logged in user
   if (!isset($user)) {
@@ -111,8 +112,8 @@ function setUserSetting($label, $value, $user=NULL) {
     $newDefault=true;
   }
 
-  // Place a default setting if it does not already exist
-  if ($newDefault) {
+  // Place a default setting if it does not already exist (and createDefault flag is set)
+  if ($newDefault && $createDefault) {
     sqlStatement("INSERT INTO user_settings " .
       "(setting_user, setting_label, setting_value) " .
       "VALUES ('0',?,?)", array($label, $value) );

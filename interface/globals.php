@@ -190,15 +190,43 @@ $GLOBALS['sell_non_drug_products'] = 0;
 
 $glrow = sqlQuery("SHOW TABLES LIKE 'globals'");
 if (!empty($glrow)) {
+  // Collect user specific settings from user_settings table.
+  //
+  $gl_user = array();
+  if (!empty($_SESSION['authUserID'])) {
+    $glres_user = sqlStatement("SELECT `setting_label`, `setting_value` " .
+      "FROM `user_settings` " .
+      "WHERE `setting_user` = ? " .
+      "AND `setting_label` LIKE 'global:%'", array($_SESSION['authUserID']) );
+    for($iter=0; $row=sqlFetchArray($glres_user); $iter++) {
+      //remove global_ prefix from label
+      $row['setting_label'] = substr($row['setting_label'],7);
+      $gl_user[$iter]=$row;
+      //error_log("DEBUG : ".$row['setting_label']." ".$row['setting_value'],0);
+    }
+  }
+
   // Set global parameters from the database globals table.
   // Some parameters require custom handling.
   //
   $GLOBALS['language_menu_show'] = array();
   $glres = sqlStatement("SELECT gl_name, gl_index, gl_value FROM globals " .
     "ORDER BY gl_name, gl_index");
+
   while ($glrow = sqlFetchArray($glres)) {
     $gl_name  = $glrow['gl_name'];
     $gl_value = $glrow['gl_value'];
+
+    // Adjust for user specific settings
+    if (!empty($gl_user)) {
+      foreach ($gl_user as $setting) {
+        if ($gl_name == $setting['setting_label']) {
+          //error_log("DEBUG2 : replaced ".$gl_name.":".$gl_value." with ".$setting['setting_label'].":".$setting['setting_value'],0);
+          $gl_value = $setting['setting_value'];
+        }
+      }
+    }
+
     if ($gl_name == 'language_menu_other') {
       $GLOBALS['language_menu_show'][] = $gl_value;
     }
@@ -216,7 +244,7 @@ if (!empty($glrow)) {
       else if ($gl_value == '3') $GLOBALS['sell_non_drug_products'] = 2;
     }
     else {
-      $GLOBALS[$gl_name] = $glrow['gl_value'];
+      $GLOBALS[$gl_name] = $gl_value;
     }
   }
   // Language cleanup stuff.
