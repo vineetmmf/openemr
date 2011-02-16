@@ -22,10 +22,10 @@ function gen_x12_837($pid, $encounter, &$log, $encounter_claim=false) {
     date('Y-m-d H:i', $today) . ".\n";
 
   $out .= "ISA" .
-    "*00" .
-    "*          " .
-    "*00" .
-    "*          " .
+    "*" . $claim->x12gsisa01() .
+    "*" . $claim->x12gsisa02() .
+    "*" . $claim->x12gsisa03() .
+    "*" . $claim->x12gsisa04() .
     "*" . $claim->x12gsisa05() .
     "*" . $claim->x12gssenderid() .
     "*" . $claim->x12gsisa07() .
