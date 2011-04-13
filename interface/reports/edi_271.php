@@ -58,7 +58,7 @@
 					$message	= htmlspecialchars( xl('The following EDI file has been uploaded').': "'. basename( $_FILES['uploaded']['name']).'"', ENT_NOQUOTES); 
 					
 					// Stores the content of the file    
-					$Response271= file($FilePath);
+					$Response271= file_get_contents($FilePath);
 
 					// Counts the number of lines       
 					$LineCount	= count($Lines);
@@ -74,102 +74,329 @@
 					$j			=	0;
 					$patientId	= "";
 
-					// Loop through each line 
-					foreach($Response271 as $Value)
-					{
-					   // In the array store this line 
-						// with values delimited by ^ (tilt) 
-						// as separate array values 
-						
-						$DataSegment271[$i] = explode("^", $Value);
-						
-						
-						if(count($DataSegment271[$i])<6)
-						{
-								$messageEDI	= true;
-								$message = "";
-								if(file_exists($target))
-								{
-									unlink($target);
-								}
-						}
-						else
-						{
-							foreach ($DataSegment271[$i] as $datastrings)
-							{
-								
-								$Segments271[$j] = explode("*", $datastrings);
-								
-								$segment		 = $Segments271[$j][0];
+					
+					$DataSegment271 = explode("~", $Response271);
 
-								
-								// Switch Case for Segment
-								
-								switch ($segment) 
-								{
-									case 'ISA':
-										
-										$j = 0;
-									
-										foreach($Segments271[$j] as $segmentVal){
-											
-											if($j == 6)
-											{
-												$x12PartnerId = $segmentVal;
-											}
-											
-											$j	=	$j + 1;
-										}
-										
-										break;
-
-									case 'REF':
-
-										foreach($Segments271[$j] as $segmentVal){
-											
-											if($segmentVal == "EJ")
-											{
-												$patientId = $Segments271[$j][2];
-											}
-										}
-										
-										break;
-
-									case 'EB':
-
-										foreach($Segments271[$j] as $segmentVal){
-											
-											
-										}
-										break;
-
-									case 'MSG':
-										
-										foreach($Segments271[$j] as $segmentVal){
-							
-											if($segment != $segmentVal)
-											{
-												eligibility_response_save($segmentVal,$x12PartnerId);
-												
-												eligibility_verification_save($segmentVal,$x12PartnerId,$patientId);
-											}
-										}
-										
-										break;
-
-
-							
-								}
-
-								
-							   
-							   // Increase the line index 
-							   $j++;
-							}
-						}
-					  //Increase the line index  
-					   $i++;
+					if(count($DataSegment271)<6){
+						$DataSegment271 = explode("^", $Response271);
 					}
+					
+					if(count($DataSegment271)<6)
+					{
+						$messageEDI	= true;
+						$message = "";
+						if(file_exists($target))
+						{
+							unlink($target);
+						}
+					}
+					else
+					{
+						$forCount	=	1;
+
+						foreach ($DataSegment271 as $datastrings)
+						{							
+							
+							$Segments271[$j] = explode("*", $datastrings);
+							
+							$segment		 = $Segments271[$j][0];
+
+							
+							// Switch Case for Segment 
+							
+							switch ($segment) 
+							{
+								case 'ISA':
+									
+											$x12PartnerId = $Segments271[0][6];
+											break;
+
+								case 'NM1':
+											
+											$patientLastName	= "";
+											$patientMidName		= "";
+											$patientFirstName	= "";
+
+											if($Segments271[$j][1] == "IL" && $Segments271[$j][2] == "1"){
+												$patientLastName  = $Segments271[$j][3];
+												$patientFirstName = $Segments271[$j][4];
+												$patientMidName	  = $Segments271[$j][5];
+											}
+											break;
+
+								case 'DMG':
+									
+											$patientDOB	=	"";
+											$patientGEN	=	"";
+
+											if(isset($Segments271[$j][2]) && !empty($Segments271[$j][2])){
+												$patientDOB = $Segments271[$j][2];
+											}
+											if(isset($Segments271[$j][3]) && !empty($Segments271[$j][3])){
+												$patientGEN = ($Segments271[$j][3] == 'F' ? 'Female' : 'Male');
+											}
+
+											break;
+
+								case 'REF':
+
+											$REFVAL	=	$Segments271[$j][1];	
+
+											Switch($EBVAL)
+											{
+													
+												case "EJ":
+															$patientId	= $Segments271[$j][2];
+															$idType		= htmlspecialchars( xl('ID'), ENT_NOQUOTES);
+															break;
+
+												case "18":  /* Contract Number followed by Plan Number */
+															$patientId	= $Segments271[$j][2];
+															$idType		= htmlspecialchars( xl('PLANNO'), ENT_NOQUOTES);
+															break;
+
+												case "IG":  /* Insurance Policy Number */
+															$patientId	= $Segments271[$j][2];
+															$idType		= htmlspecialchars( xl('POLICYNO'), ENT_NOQUOTES);
+															break;
+
+												case "49":  /* Family ID Number */
+															$patientId	= $Segments271[$j][2];
+															$idType		= htmlspecialchars( xl('FAMILYID'), ENT_NOQUOTES);
+															break;
+															
+												case "SY":  /* Reference ID Qualifier - SSN */
+															$patientId	= $Segments271[$j][2];
+															$idType		= htmlspecialchars( xl('SSN'), ENT_NOQUOTES);
+															break;
+
+												case "F6":  /* Health Insurance Claim Number - Medicare ID Number*/
+															$patientId	= $Segments271[$j][2];
+															$idType		= htmlspecialchars( xl('MEDID'), ENT_NOQUOTES);
+															break;
+											}
+											
+											break;
+								case 'EB':
+								
+											$EBVAL	=	$Segments271[$j][1];
+
+											
+											Switch($EBVAL)
+											{
+												
+												case '1': 
+															$segmentVal		= htmlspecialchars( xl('Status'), ENT_NOQUOTES);
+															$segmentValData = htmlspecialchars( xl('Active Coverage'), ENT_NOQUOTES);
+															eligibility_response_save($segmentVal,$x12PartnerId);
+															eligibility_verification_save($segmentVal,$x12PartnerId,$patientId,$idType,$patientDOB,$patientGEN,$patientLastName,$patientMidName,$patientFirstName,$segmentValData);
+															break;
+												case '6': 
+															$segmentVal		= htmlspecialchars( xl('Status'), ENT_NOQUOTES)." :";
+															$segmentValData = htmlspecialchars( xl('Subscriber is Not Eligible'), ENT_NOQUOTES); 
+															eligibility_response_save($segmentVal,$x12PartnerId);
+															eligibility_verification_save($segmentVal,$x12PartnerId,$patientId,$idType,$patientDOB,$patientGEN,$patientLastName,$patientMidName,$patientFirstName,$segmentValData);
+															break;
+
+												case 'B': 
+															if($Segments271[$j][3] == "47"){
+																$segmentVal		= htmlspecialchars( xl('Hospital Copayment Days Remaining'), ENT_NOQUOTES); 
+																$segmentValData = $Segments271[$j][10];
+															}	
+															else if($Segments271[$j][3] == "AG"){
+																$segmentVal		= htmlspecialchars( xl('SNF Copayment Days Remaining'), ENT_NOQUOTES); 
+																$segmentValData = $Segments271[$j][10];
+															}	
+															else{
+																$segmentVal		= htmlspecialchars( xl('Hospital Copayment Days Remaining'), ENT_NOQUOTES); 
+																$segmentValData	= $Segments271[$j][10];
+															}
+															eligibility_response_save($segmentVal,$x12PartnerId);
+															eligibility_verification_save($segmentVal,$x12PartnerId,$patientId,$idType,$patientDOB,$patientGEN,$patientLastName,$patientMidName,$patientFirstName,$segmentValData);
+															break;
+												case 'C':	
+															if($Segments271[$j][4] == "MA"){
+																$segmentVal		= htmlspecialchars( xl('Part A Deductible Remaining'), ENT_NOQUOTES);
+																$segmentValData = $Segments271[$j][7];
+															}
+															else if($Segments271[$j][4] == "MB"){
+																$segmentVal		= htmlspecialchars( xl('Part B Deductible Remaining'), ENT_NOQUOTES);
+																$segmentValData = $Segments271[$j][7];
+															}
+															else if($Segments271[$j][2] == "IND"){
+																$segmentVal		= htmlspecialchars( xl('Blood Deductible - Number of Units Remaining'), ENT_NOQUOTES);
+																$segmentValData = $Segments271[$j][10];
+															}
+															else{
+																$segmentVal		=	htmlspecialchars( xl('Deductible Remaining'), ENT_NOQUOTES); 
+																$segmentValData	=	$Segments271[$j][7];
+															}
+															
+															
+															eligibility_response_save($segmentVal,$x12PartnerId);
+															eligibility_verification_save($segmentVal,$x12PartnerId,$patientId,$idType,$patientDOB,$patientGEN,$patientLastName,$patientMidName,$patientFirstName,$segmentValData);
+															break;
+
+												case 'D': 	if($Segments271[$j][3] == "44"){
+																$segmentVal		= htmlspecialchars( xl('Number of Home Health Visits Remaining'), ENT_NOQUOTES);
+																$segmentValData = $Segments271[$j][10];
+															}
+															else if($Segments271[$j][4] == "HM"){
+																$segmentVal		= htmlspecialchars( xl('Mental Health Services - PAID'), ENT_NOQUOTES);
+																$segmentValData = $Segments271[$j][5];
+															} 
+															else if($Segments271[$j][3] == "67"){
+																$segmentVal				= htmlspecialchars( xl('Next Eligible Smoking Counseling Date'), ENT_NOQUOTES);
+																$segmentValDataArray		= explode("*",$DataSegment271[$forCount]);
+																$segmentValDataArrayDates	= "";
+																$segmentValDataArr			= array();
+																$segmentValDataArrayDates	=   explode("-",$segmentValDataArray[3]);
+																foreach($segmentValDataArrayDates as $date){
+																	$timeX = strtotime( $date );
+																	$segmentValDataArr[]	=	date( 'j F Y', $timeX );
+																}	
+																$segmentValData = implode("-", $segmentValDataArr);
+															} 
+															else {
+																$segmentVal				=	htmlspecialchars( xl('Preventive Care with the same Professional(HCPCS Code)'), ENT_NOQUOTES); 
+																$segmentValDataArray	=	explode(":", $Segments271[$j][13]);
+																$segmentValData			=	$segmentValDataArray[1];		
+															} 
+															eligibility_response_save($segmentVal,$x12PartnerId);
+															eligibility_verification_save($segmentVal,$x12PartnerId,$patientId,$idType,$patientDOB,$patientGEN,$patientLastName,$patientMidName,$patientFirstName,$segmentValData);
+															break;
+												
+												case 'F':	if($Segments271[$j][3] == "AD"){
+																$segmentVal		= htmlspecialchars( xl('Occupational Therapy - Therapy Capitation Amount Remaining'), ENT_NOQUOTES);
+																$segmentValData = $Segments271[$j][7];
+															}
+															else if($Segments271[$j][3] == "AE"){
+																$segmentVal		= htmlspecialchars( xl('Therapy Capitation Amount Remaining'), ENT_NOQUOTES);
+																$segmentValData =  $Segments271[$j][7];
+															}	
+															else if($Segments271[$j][3] == "47"){
+																$segmentVal		= htmlspecialchars( xl('Hospital Full Days Remaining'), ENT_NOQUOTES); 
+																$segmentValData =  $Segments271[$j][10];
+															}	
+															else if($Segments271[$j][3] == "AG"){
+																$segmentVal		= htmlspecialchars( xl('SNF Full Days Remaining'), ENT_NOQUOTES); 
+																$segmentValData =  $Segments271[$j][10];
+															}	
+															else if($Segments271[$j][3] == "67"){
+																$segmentVal		= htmlspecialchars( xl('Number of Sessions Remaining'), ENT_NOQUOTES); 
+																$segmentValData =  $Segments271[$j][10];
+															}
+															else{
+																$segmentVal		= htmlspecialchars( xl('Physical and Speech Therapy - Amount Remaining'), ENT_NOQUOTES); 
+																$segmentValData =  $Segments271[$j][7];
+															}
+															
+															eligibility_response_save($segmentVal,$x12PartnerId);
+															eligibility_verification_save($segmentVal,$x12PartnerId,$patientId,$idType,$patientDOB,$patientGEN,$patientLastName,$patientMidName,$patientFirstName,$segmentValData);
+															break;
+												case 'J': 
+															if($Segments271[$j][3] == "13"){
+																$segmentVal		= htmlspecialchars( xl('Number of Ambulatory Visits Remaining'), ENT_NOQUOTES);
+																$segmentValData = $Segments271[$j][10];
+															} 
+															else if($Segments271[$j][3] == "33"){
+																$segmentVal		= htmlspecialchars( xl('Number of Chiropractic Visits Remaining'), ENT_NOQUOTES);
+																$segmentValData = $Segments271[$j][10];
+															} 
+															else{
+																$segmentVal = htmlspecialchars( xl('Cost Containment'), ENT_NOQUOTES);
+																$segmentValData = $Segments271[$j][10];
+															}
+															 
+															eligibility_response_save($segmentVal,$x12PartnerId);
+															eligibility_verification_save($segmentVal,$x12PartnerId,$patientId,$idType,$patientDOB,$patientGEN,$patientLastName,$patientMidName,$patientFirstName,$segmentValData);
+															break;
+												case 'K': 
+															if($Segments271[$j][4] == "MA"){
+																$segmentVal = htmlspecialchars( xl('Part A Lifetime Days Remaining'), ENT_NOQUOTES);  
+																$segmentValData =  $Segments271[$j][10];
+															}	
+															else if($Segments271[$j][3] == "AG"){
+																$segmentVal		= htmlspecialchars( xl('SNF Full Days Remaining'), ENT_NOQUOTES); 
+																$segmentValData =  $Segments271[$j][10];
+															}	
+															else{ 
+																$segmentVal		= htmlspecialchars( xl('Lifetime Days Remaining'), ENT_NOQUOTES);
+																$segmentValData =  $Segments271[$j][10];		
+															}
+															eligibility_response_save($segmentVal,$x12PartnerId);
+															eligibility_verification_save($segmentVal,$x12PartnerId,$patientId,$idType,$patientDOB,$patientGEN,$patientLastName,$patientMidName,$patientFirstName,$segmentValData);
+															break;
+												case 'L': 
+															
+															$segmentVal		= htmlspecialchars( xl('RSP Code Description'), ENT_NOQUOTES); 
+															$segmentValData =  $Segments271[$j][5];
+															eligibility_response_save($segmentVal,$x12PartnerId);
+															eligibility_verification_save($segmentVal,$x12PartnerId,$patientId,$idType,$patientDOB,$patientGEN,$patientLastName,$patientMidName,$patientFirstName,$segmentValData);
+															break;
+												case 'R': 
+															if($Segments271[$j][4] == "MA"){
+																$segmentVal = htmlspecialchars( xl('MEDICARE PART A DESC'), ENT_NOQUOTES) ;  
+																$segmentValData =  $Segments271[$j][5];
+															}	
+															else if($Segments271[$j][4] == "MB"){
+																$segmentVal		= htmlspecialchars( xl('MEDICARE PART B DESC'), ENT_NOQUOTES); 
+																$segmentValData =  $Segments271[$j][5];
+															}
+															else if($Segments271[$j][4] == "OT"){
+																$segmentVal				=	htmlspecialchars( xl('Policy Description'), ENT_NOQUOTES); 
+																$segmentValDataArray	=   explode("*",$DataSegment271[$forCount]);
+																$segmentValData			=	$segmentValDataArray[2];
+															}
+															
+															eligibility_response_save($segmentVal,$x12PartnerId);
+															eligibility_verification_save($segmentVal,$x12PartnerId,$patientId,$idType,$patientDOB,$patientGEN,$patientLastName,$patientMidName,$patientFirstName,$segmentValData);
+															break;
+												case 'X': 
+															if($Segments271[$j][4] == "MA" && $Segments271[$j][3] == "42"){
+																$segmentVal				= htmlspecialchars( xl('Home Health Dates'), ENT_NOQUOTES); 
+																$segmentValDataArray		=   explode("*",$DataSegment271[$forCount]);
+																$segmentValDataArrayDates	= "";
+																$segmentValDataArr			= array();
+																$segmentValDataArrayDates	=   explode("-",$segmentValDataArray[3]);
+																foreach($segmentValDataArrayDates as $date){
+																	$timeX = strtotime( $date );
+																	$segmentValDataArr[]	=	date( 'j F Y', $timeX );
+																}	
+																$segmentValData = implode("-", $segmentValDataArr);
+															}
+															else if($Segments271[$j][4] == "MA" && $Segments271[$j][3] == "45"){
+																$segmentVal = htmlspecialchars( xl('Hospice Care Dates'), ENT_NOQUOTES); 
+																$segmentValDataArray		=   explode("*",$DataSegment271[$forCount]);
+																$segmentValDataArrayDates	= "";
+																$segmentValDataArr			= array();
+																$segmentValDataArrayDates	=   explode("-",$segmentValDataArray[3]);
+																foreach($segmentValDataArrayDates as $date){
+																	$timeX					= strtotime( $date );
+																	$segmentValDataArr[]	=	date( 'j F Y', $timeX );
+																}	
+																$segmentValData = implode("-", $segmentValDataArr);
+															}
+															
+															eligibility_response_save($segmentVal,$x12PartnerId);
+															eligibility_verification_save($segmentVal,$x12PartnerId,$patientId,$idType,$patientDOB,$patientGEN,$patientLastName,$patientMidName,$patientFirstName,$segmentValData);
+															break;
+											}											
+											break;
+
+								case 'MSG':
+											eligibility_response_save($Segments271[$j][1],$x12PartnerId);
+											eligibility_verification_save($Segments271[$j][1],$x12PartnerId,$patientId);
+											break;
+						
+							}
+						   
+						   /******* Increase the line index ***************/ 
+						   $j++; $forCount++;
+						}
+					}
+				   /******* Increase the line index *******************/ 
+				   $i++;
 				}				
 			} 
 			else 

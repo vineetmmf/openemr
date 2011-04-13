@@ -1,0 +1,1 @@
+ALTER TABLE eligibility_verification ADD COLUMN response_value varchar(255);
